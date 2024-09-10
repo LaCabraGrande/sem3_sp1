@@ -1,6 +1,7 @@
-import app.persistence.entities.Location;
-import app.persistence.entities.Package;
-import app.persistence.entities.Shipment;
+package app.persistence.config;
+
+import app.persistence.entities.Genre;
+import app.persistence.entities.Movie;
 import app.persistence.enums.HibernateConfigState;
 import jakarta.persistence.EntityManagerFactory;
 import lombok.NoArgsConstructor;
@@ -8,6 +9,7 @@ import org.hibernate.SessionFactory;
 import org.hibernate.boot.registry.StandardServiceRegistryBuilder;
 import org.hibernate.cfg.Configuration;
 import org.hibernate.service.ServiceRegistry;
+
 
 import java.util.Properties;
 
@@ -31,9 +33,9 @@ public class HibernateConfig {
 
     private static void getAnnotationConfiguration(Configuration configuration) {
         // add annotated classes --- remember to add new entities here
-        configuration.addAnnotatedClass(Package.class);
-        configuration.addAnnotatedClass(Location.class);
-        configuration.addAnnotatedClass(Shipment.class);
+        configuration.addAnnotatedClass(Movie.class);
+        configuration.addAnnotatedClass(Genre.class);
+
     }
 
     private static EntityManagerFactory buildEntityFactoryConfig() {
@@ -60,9 +62,6 @@ public class HibernateConfig {
             throw new ExceptionInInitializerError(ex);
         }
     }
-
-
-
 
     private static EntityManagerFactory setupHibernateConfigTest() {
         try {

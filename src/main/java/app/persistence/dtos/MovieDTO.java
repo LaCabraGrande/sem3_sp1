@@ -1,53 +1,30 @@
-package dtos;
+package app.persistence.dtos;
 
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-import com.fasterxml.jackson.annotation.JsonProperty;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
-
-import java.time.LocalDate;
+import lombok.*;
 import java.util.List;
+import java.util.Set;
 
-@Getter
-@Setter
 @NoArgsConstructor
-@JsonIgnoreProperties(ignoreUnknown = true) // Ignorer ukendte felter
+@AllArgsConstructor
+@Data
+@Builder
+@Setter
 public class MovieDTO {
-    @JsonProperty("id")
-    private int id;
 
-    @JsonProperty("title")
+    private Long id;
     private String title;
-
-    @JsonProperty("overview")
     private String overview;
-
-    @JsonProperty("release_date")
-    private LocalDate releaseDate;
-
-    @JsonProperty("rating")
-    private double rating; // Antag, at rating eksisterer i svar, ellers fjern denne
-
-    // Tilføj ekstra felter som du vil bruge
-    @JsonProperty("adult")
-    private boolean adult;
-
-    @JsonProperty("backdrop_path")
+    private String releaseDate;
+    private Double rating;
+    private Boolean adult;
     private String backdropPath;
-
-    @JsonProperty("genre_ids")
-    private List<Integer> genreIds;
-
-    @JsonProperty("original_language")
-    private String originalLanguage;
-
-    @JsonProperty("original_title")
-    private String originalTitle;
-
-    @JsonProperty("popularity")
-    private double popularity;
-
-    @JsonProperty("poster_path")
     private String posterPath;
+    private Double popularity;
+    private String originalLanguage;
+    private String originalTitle;
+    private Double voteAverage;
+    private Integer voteCount;
+    private Set<Integer> genreIds;  // Set of genre IDs
+    private List<String> genreNames; // Giv genreNames som List<String>
+
 }

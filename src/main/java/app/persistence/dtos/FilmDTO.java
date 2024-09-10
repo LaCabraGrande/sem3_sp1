@@ -1,4 +1,4 @@
-package dtos;
+package app.persistence.dtos;
 
 import lombok.Data;
 

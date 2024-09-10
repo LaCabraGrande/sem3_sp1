@@ -1,6 +1,6 @@
-package services;
+package app.persistence.services;
 
-import dtos.MovieDTO;
+import app.persistence.dtos.MovieDTO;
 
 import java.util.List;
 import java.util.stream.Collectors;

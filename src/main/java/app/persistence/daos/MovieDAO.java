@@ -1,36 +1,32 @@
 package app.persistence.daos;
-
-import app.persistence.HibernateConfig;
-import app.persistence.entities.Package;
-import app.persistence.entities.Shipment;
-import app.persistence.entities.Location;
+import app.persistence.dtos.GenreDTO;
+import app.persistence.entities.Genre;
+import jakarta.persistence.*;
+import app.persistence.dtos.MovieDTO;
+import app.persistence.entities.Movie;
+import app.persistence.config.HibernateConfig;
 import app.persistence.enums.HibernateConfigState;
-import app.persistence.exceptions.JpaException;
-import jakarta.persistence.EntityManager;
-import jakarta.persistence.EntityManagerFactory;
-import jakarta.persistence.TypedQuery;
 
-import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
+import java.util.stream.Collectors;
 
-public class PackageDAO implements IDAO<Package> {
+public class MovieDAO implements IDAO<Movie> {
 
-    private static PackageDAO instance;
+    private static MovieDAO instance;
     private static EntityManagerFactory emf;
+    private EntityManager em;
 
-    private PackageDAO() {
+    private MovieDAO() {
+        em = emf.createEntityManager();
     }
 
-    public static PackageDAO getInstance(HibernateConfigState state) {
+    public static MovieDAO getInstance(HibernateConfigState state) {
         if (instance == null) {
-            emf = HibernateConfig.getEntityManagerFactoryConfig(state, "gls");
-            instance = new PackageDAO();
+            emf = HibernateConfig.getEntityManagerFactoryConfig(state, "movie");
+            instance = new MovieDAO();
         }
         return instance;
-    }
-
-    public static EntityManagerFactory getEmf() {
-        return emf;
     }
 
     public static void close() {
@@ -40,125 +36,81 @@ public class PackageDAO implements IDAO<Package> {
     }
 
     @Override
-    public Package create(Package newPackage) {
-
-        try (EntityManager em = emf.createEntityManager()) {
-            em.getTransaction().begin();
-            try {
-                // Persist package
-                if (newPackage.getId() == null) {
-                    em.persist(newPackage);
-                } else {
-                    newPackage = em.merge(newPackage);
-                }
-                // Persist each shipment and ensure relationship sync
-                for (Shipment shipment : newPackage.getShipments()) {
-                    shipment.setRelatedPackage(newPackage);  // Synchronize relationship
-
-                    // Persist or merge locations
-                    if (shipment.getSourceLocation() != null && shipment.getDestinationLocation() != null) {
-                        persistOrMergeLocation(shipment.getSourceLocation(), em);
-                        persistOrMergeLocation(shipment.getDestinationLocation(), em);
-                    } else {
-                        if (em != null && em.getTransaction().isActive()) {
-                            em.getTransaction().rollback();  // Rollback transaction on failure
-                        }
-                        throw new JpaException("Error creating package: Shipment locations cannot be null");
-                    }
-                    persistOrMergeLocation(shipment.getSourceLocation(), em);
-                    persistOrMergeLocation(shipment.getDestinationLocation(), em);
-
-                    if (shipment.getId() == null) {
-                        em.persist(shipment);
-                    } else {
-                        em.merge(shipment);
-                    }
-                }
-                em.getTransaction().commit();
-            }
-            catch (Exception e) {
-                if (em != null && em.getTransaction().isActive()) {
-                    em.getTransaction().rollback();  // Rollback transaction on failure
-                }
-                throw new JpaException("Error creating package. Transaction is rolledback: " + e.getMessage());
-            }
-            return newPackage;
-        }
-    }
-
-    // Helper method to persist location used in a shipment
-    private void persistOrMergeLocation(Location location, EntityManager em) {
-        if (location != null) {
-            if (location.getId() == null) {
-                em.persist(location);
-            } else {
-                em.merge(location);
-            }
-        }
+    public Movie findById(Long id) {
+        return em.find(Movie.class, id);
     }
 
     @Override
-    public Package findById(Long id) {
-        try (EntityManager em = emf.createEntityManager()) {
-             return em.find(Package.class, id);
-        }
-        catch (Exception e) {
-            throw new JpaException("Error finding package: " + e.getMessage());
-        }
-    }
-
-    @Override
-    public Package findByTrackingNumber(String trackingNumber) {
-        // use a typedquery
-        try (EntityManager em = emf.createEntityManager()) {
-            TypedQuery<Package> query = em.createQuery("SELECT p FROM Package p WHERE p.trackingNumber = :trackingNumber", Package.class);
-            query.setParameter("trackingNumber", trackingNumber);
-            query.setMaxResults(1);
-            return query.getSingleResult();
-        }
-        catch (Exception e) {
-            throw new JpaException("Error finding package by tracking number: " + e.getMessage());
-        }
-    }
-
-    @Override
-    public Package update(Package aPackage) {
-        Package updatedPackage = create(aPackage);
-        return updatedPackage;
-    }
-
-    @Override
-    public Set<Package> getAll() {
-        try (EntityManager em = emf.createEntityManager()) {
-            return new HashSet<>(em.createQuery("SELECT p FROM Package p LEFT JOIN FETCH p.shipments", Package.class)
-                    .getResultList());
+    public Movie update(Movie movie) {
+        EntityTransaction transaction = em.getTransaction();
+        try {
+            transaction.begin();
+            Movie updatedMovie = em.merge(movie);
+            transaction.commit();
+            return updatedMovie;
         } catch (Exception e) {
-            throw new JpaException("Error getting all packages: " + e.getMessage());
+            transaction.rollback();
+            throw e;
         }
     }
 
     @Override
-    public boolean delete(Package aPackage) {
-        try (EntityManager em = emf.createEntityManager()) {
-            em.getTransaction().begin();
-            for (Shipment shipment : aPackage.getShipments()) {
-                shipment.getSourceLocation().getShipmentsAsSource().remove(shipment);
-                shipment.getDestinationLocation().getShipmentsAsDestination().remove(shipment);
-                em.remove(shipment);
+    public void create(MovieDTO dto) {
+        EntityTransaction transaction = em.getTransaction();
+        try {
+            transaction.begin();
+
+            // Find existing Movie or create new one
+            Movie movie = em.find(Movie.class, dto.getId());
+            if (movie == null) {
+                movie = new Movie();
             }
-            em.remove(aPackage);
-            em.getTransaction().commit();
+
+            movie.setId(dto.getId()); // Set ID for the movie
+            movie.setTitle(dto.getTitle());
+            movie.setOverview(dto.getOverview());
+            movie.setReleaseDate(dto.getReleaseDate());
+            movie.setRating(dto.getRating() != null ? dto.getRating() : 0.0); // Handle null values
+            movie.setPosterPath(dto.getPosterPath());
+            movie.setVoteCount(dto.getVoteCount());
+
+            // Map genreIds to Genre entities
+            Set<Genre> genres = dto.getGenreIds().stream()
+                    .map(genreId -> {
+                        Genre genre = em.find(Genre.class, genreId);
+                        if (genre == null) {
+                            throw new IllegalStateException("Genre with ID " + genreId + " not found");
+                        }
+                        return genre;
+                    })
+                    .collect(Collectors.toSet());
+
+            movie.setGenres(genres);
+
+            // Use merge instead of persist
+            em.merge(movie);
+
+            transaction.commit();
+        } catch (Exception e) {
+            transaction.rollback();
+            throw e;
         }
-        catch (Exception e) {
-            return false;
-        }
-        return true;
     }
 
-    public Set<Shipment> getAllShipments() {
-        try(EntityManager em = emf.createEntityManager()) {
-            TypedQuery<Shipment> query = em.createQuery("SELECT s FROM Shipment s", Shipment.class);
-            return Set.copyOf(query.getResultList());
-        }
+
+
+    @Override
+    public void create(GenreDTO dto) {
+
+    }
+
+    @Override
+    public void create(Genre genre) {
+
+    }
+
+    @Override
+    public List<Movie> getAllMovies() {
+        return em.createQuery("SELECT m FROM Movie m", Movie.class).getResultList();
     }
 }
