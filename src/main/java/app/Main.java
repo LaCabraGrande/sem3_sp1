@@ -5,32 +5,27 @@ import app.persistence.daos.MovieDAO;
 import app.persistence.dtos.MovieDTO;
 import app.persistence.entities.Genre;
 import app.persistence.entities.Movie;
+import app.persistence.exceptions.JpaException;
 import app.persistence.fetcher.FilmFetcher;
 import app.persistence.enums.HibernateConfigState;
 import app.persistence.services.MovieService;
-
 import java.util.List;
 
 public class Main {
     public static void main(String[] args) {
-
         MovieDAO movieDAO = MovieDAO.getInstance(HibernateConfigState.NORMAL);
         GenreDAO genreDAO = GenreDAO.getInstance(HibernateConfigState.NORMAL);
         FilmFetcher fetcher = new FilmFetcher(genreDAO);
         MovieService movieService = new MovieService(movieDAO);
 
-
         try{
             List<MovieDTO> danishMovies = null;
-            // Opretter alle genrer i tabellen genre i databasen
-//            fetcher.populateGenres();
-//            danishMovies = fetcher.fetchDanishMovies();
 
-            // Kontroller om tabellerne er tomme
+            // Kontroller om tabellerne er tomme inden jeg opretter dem
             if (genreDAO.countGenres() == 0) {
                 fetcher.populateGenres();
             }
-
+            // Kontroller om tabellerne er tomme inden jeg opretter dem
             if (movieDAO.countMovies() == 0) {
                 danishMovies = fetcher.fetchDanishMovies();
             }
@@ -62,7 +57,7 @@ public class Main {
             //printAllMoviesWithGenres(movieDAO);
 
         } catch (Exception e) {
-            e.printStackTrace();
+            throw new JpaException("An error occurred while fetching movies", e);
         } finally {
             // Luk EntityManagerFactory, når du er færdig
             GenreDAO.close();
