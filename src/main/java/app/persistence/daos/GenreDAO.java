@@ -2,6 +2,7 @@ package app.persistence.daos;
 import app.persistence.config.HibernateConfig;
 import app.persistence.dtos.MovieDTO;
 import app.persistence.enums.HibernateConfigState;
+import app.persistence.exceptions.JpaException;
 import jakarta.persistence.*;
 import app.persistence.dtos.GenreDTO;
 import app.persistence.entities.Genre;
@@ -41,14 +42,14 @@ public class GenreDAO implements IDAO<Genre> {
     @Override
     public Genre update(Genre genre) {
         EntityTransaction transaction = em.getTransaction();
-        try {
-            transaction.begin();
+        try (EntityManager em = emf.createEntityManager()) {
+            em.getTransaction().begin();
             Genre updatedGenre = em.merge(genre);
-            transaction.commit();
+            em.getTransaction().commit();
             return updatedGenre;
         } catch (Exception e) {
             transaction.rollback();
-            throw e;
+            throw new JpaException("An error occurred while updating genre", e);
         }
     }
 
@@ -65,13 +66,13 @@ public class GenreDAO implements IDAO<Genre> {
     @Override
     public void create(Genre genre) {
         EntityTransaction transaction = em.getTransaction();
-        try {
-            transaction.begin();
+        try (EntityManager em = emf.createEntityManager()) {
+            em.getTransaction().begin();
             em.persist(genre);
-            transaction.commit();
+            em.getTransaction().commit();
         } catch (Exception e) {
             transaction.rollback();
-            throw e;
+            throw new JpaException("An error occurred while creating genre", e);
         }
     }
 
@@ -81,13 +82,12 @@ public class GenreDAO implements IDAO<Genre> {
     }
 
     public List<Genre> findGenresByIds(Set<Integer> genreIds) {
-        EntityManager em = getEntityManager();
-        try {
+        try (EntityManager em = emf.createEntityManager()) {
             return em.createQuery("SELECT g FROM Genre g WHERE g.genreId IN :ids", Genre.class)
                     .setParameter("ids", genreIds)
                     .getResultList();
-        } finally {
-            em.close();
+        } catch (Exception e) {
+            throw new JpaException("An error occurred while fetching genres by ids", e);
         }
     }
 

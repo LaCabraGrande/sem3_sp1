@@ -37,7 +37,7 @@ public class FilmFetcher {
 
     // Henter danske film over 50 sider
     public List<MovieDTO> fetchDanishMovies() throws IOException, InterruptedException {
-        for (int page = 1; page <= 50; page++) {
+        for (int page = 1; page <= 25; page++) {
             String apiUrl = BASE_API_URL + page;
             String jsonResponse = fetchApiResponse(apiUrl);
             extractMovies(jsonResponse);
@@ -52,7 +52,6 @@ public class FilmFetcher {
                 .uri(URI.create(apiUrl))
                 .GET()
                 .build();
-
         HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
         return response.body();
     }

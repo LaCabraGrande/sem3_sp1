@@ -22,13 +22,10 @@ public class Main {
             List<MovieDTO> danishMovies = null;
 
             // Kontroller om tabellerne er tomme inden jeg opretter dem
-            if (genreDAO.countGenres() == 0) {
-                fetcher.populateGenres();
-            }
+            fetcher.populateGenres();
+
             // Kontroller om tabellerne er tomme inden jeg opretter dem
-            if (movieDAO.countMovies() == 0) {
-                danishMovies = fetcher.fetchDanishMovies();
-            }
+            danishMovies = fetcher.fetchDanishMovies();
 
             // Opretter alle film en ad gangen i databasen
             System.out.println("Saving movies...");

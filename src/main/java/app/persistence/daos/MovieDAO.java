@@ -1,6 +1,8 @@
 package app.persistence.daos;
+
 import app.persistence.dtos.GenreDTO;
 import app.persistence.entities.Genre;
+import app.persistence.exceptions.JpaException;
 import jakarta.persistence.*;
 import app.persistence.dtos.MovieDTO;
 import app.persistence.entities.Movie;
@@ -43,26 +45,24 @@ public class MovieDAO implements IDAO<Movie> {
     @Override
     public Movie update(Movie movie) {
         EntityTransaction transaction = em.getTransaction();
-        try {
-            transaction.begin();
+        try (EntityManager em = emf.createEntityManager()) {
+            em.getTransaction().begin();
             Movie updatedMovie = em.merge(movie);
-            transaction.commit();
+            em.getTransaction().commit();
             return updatedMovie;
         } catch (Exception e) {
             transaction.rollback();
-            throw e;
+            throw new JpaException("An error occurred while updating movie", e);
         }
     }
 
     @Override
     public void create(MovieDTO dto) {
         EntityTransaction transaction = em.getTransaction();
-        try {
-            transaction.begin();
-
+        try (EntityManager em = emf.createEntityManager()) {
+            em.getTransaction().begin();
             // Opret en ny Movie-entitet
             Movie movie = new Movie();
-
             // Map værdier fra DTO til Movie-entiteten
             movie.setImdbId(dto.getImdbId());
             movie.setTitle(dto.getTitle());
@@ -90,32 +90,27 @@ public class MovieDAO implements IDAO<Movie> {
                     })
                     .collect(Collectors.toSet());
 
-            // Sæt genres på Movie-entiteten
+            // Sætter genrer på Movie-entiteten
             movie.setGenres(genres);
 
-            // Brug persist for at oprette en ny Movie
+            // Gemmer Movie-entiteten i databasen
             em.persist(movie);
-
-            transaction.commit();
+            // Luk EntityManager
+            em.getTransaction().commit();
         } catch (Exception e) {
             if (transaction.isActive()) {
                 transaction.rollback();
             }
-            throw e;
+            throw new JpaException("An error occurred while creating movie", e);
         }
     }
 
-
-
-
     @Override
     public void create(GenreDTO dto) {
-
     }
 
     @Override
     public void create(Genre genre) {
-
     }
 
     @Override
