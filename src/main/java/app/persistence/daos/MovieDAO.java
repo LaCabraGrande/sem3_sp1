@@ -122,4 +122,10 @@ public class MovieDAO implements IDAO<Movie> {
     public List<Movie> getAllMovies() {
         return em.createQuery("SELECT m FROM Movie m", Movie.class).getResultList();
     }
+
+    public long countMovies() {
+        try (EntityManager em = emf.createEntityManager()) {
+            return em.createQuery("SELECT COUNT(m) FROM Movie m", Long.class).getSingleResult();
+        }
+    }
 }

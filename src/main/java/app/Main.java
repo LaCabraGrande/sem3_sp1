@@ -7,6 +7,8 @@ import app.persistence.entities.Genre;
 import app.persistence.entities.Movie;
 import app.persistence.fetcher.FilmFetcher;
 import app.persistence.enums.HibernateConfigState;
+import app.persistence.services.MovieService;
+
 import java.util.List;
 
 public class Main {
@@ -15,12 +17,23 @@ public class Main {
         MovieDAO movieDAO = MovieDAO.getInstance(HibernateConfigState.NORMAL);
         GenreDAO genreDAO = GenreDAO.getInstance(HibernateConfigState.NORMAL);
         FilmFetcher fetcher = new FilmFetcher(genreDAO);
-        List<MovieDTO> danishMovies;
+        MovieService movieService = new MovieService(movieDAO);
+
 
         try{
+            List<MovieDTO> danishMovies = null;
             // Opretter alle genrer i tabellen genre i databasen
-            fetcher.populateGenres();
-            danishMovies = fetcher.fetchDanishMovies();
+//            fetcher.populateGenres();
+//            danishMovies = fetcher.fetchDanishMovies();
+
+            // Kontroller om tabellerne er tomme
+            if (genreDAO.countGenres() == 0) {
+                fetcher.populateGenres();
+            }
+
+            if (movieDAO.countMovies() == 0) {
+                danishMovies = fetcher.fetchDanishMovies();
+            }
 
             // Opretter alle film en ad gangen i databasen
             System.out.println("Saving movies...");
@@ -28,6 +41,22 @@ public class Main {
                 movieDAO.create(movie);
             }
             System.out.println("Movies saved.");
+
+            // Udskriver alle film der har en rating over 7
+            System.out.println("Film med en rating over 7:");
+            movieService.getMoviesWithRatingAbove(7).forEach(movie -> System.out.println(formatMovieDetails(movie)));
+
+            // Udskriver alle film der har genren "Krig"
+            System.out.println("Film med genren 'Krig':");
+            movieService.getMoviesByGenre("Krig").forEach(movie -> System.out.println(formatMovieDetails(movie)));
+
+            // Udskriver alle film fra 2024 med over 100 stemmer
+            System.out.println("Film fra 2024:");
+            movieService.getMoviesFromYear(2024).forEach(movie -> System.out.println(formatMovieDetails(movie)));
+
+            // Udskriver alle film med over 100 stemmer
+            System.out.println("Film med over 100 stemmer:");
+            movieService.getMoviesWithMinimumVotes(100).forEach(movie -> System.out.println(formatMovieDetails(movie)));
 
             // Udskriver alle film der ligger i Databasen
             //printAllMoviesWithGenres(movieDAO);

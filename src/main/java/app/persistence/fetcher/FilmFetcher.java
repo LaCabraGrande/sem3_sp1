@@ -34,7 +34,7 @@ public class FilmFetcher {
     }
 
     public List<MovieDTO> fetchDanishMovies() throws IOException {
-        for (int page = 1; page <= 500; page++) {
+        for (int page = 1; page <= 50; page++) {
             String apiUrl = BASE_API_URL + page;
             String jsonResponse = fetchApiResponse(apiUrl);
             //System.out.println("jsonResponse: " + jsonResponse);

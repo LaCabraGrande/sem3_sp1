@@ -1,29 +1,45 @@
 package app.persistence.services;
 
-import app.persistence.dtos.MovieDTO;
-
+import app.persistence.daos.MovieDAO;
+import app.persistence.entities.Movie;
 import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 public class MovieService {
 
-    private List<MovieDTO> movies;
+    private final MovieDAO movieDAO;
 
-    public MovieService(List<MovieDTO> movies) {
-        this.movies = movies;
+    public MovieService(MovieDAO movieDAO) {
+        this.movieDAO = movieDAO;
     }
 
-    public List<MovieDTO> getByRating(double rating) {
-        // Filtrer filmene baseret på rating
-        return movies.stream()
-                .filter(movie -> movie.getVoteAverage() >= rating)
+    // Returnerer en liste af film med en rating over 7
+    public List<Movie> getMoviesWithRatingAbove(double rating) {
+        return movieDAO.getAllMovies().stream()
+                .filter(movie -> movie.getVoteAverage() > rating)
                 .collect(Collectors.toList());
     }
 
-    public List<MovieDTO> getSortedByReleaseDate() {
-        // Sorter filmene efter udgivelsesdato i faldende rækkefølge
-        return movies.stream()
-                .sorted((m1, m2) -> m2.getReleaseDate().compareTo(m1.getReleaseDate()))
+    // Returnerer en liste af film som har genren "Krig"
+    public List<Movie> getMoviesByGenre(String genreName) {
+        return movieDAO.getAllMovies().stream()
+                .filter(movie -> movie.getGenres().stream()
+                        .anyMatch(genre -> genre.getName().equalsIgnoreCase(genreName)))
+                .collect(Collectors.toList());
+    }
+
+    // Returnerer en liste af film fra 2024
+    public List<Movie> getMoviesFromYear(int year) {
+        return movieDAO.getAllMovies().stream()
+                .filter(movie -> movie.getReleaseDate() != null && movie.getReleaseDate().startsWith(String.valueOf(year)))
+                .collect(Collectors.toList());
+    }
+
+    // Returnerer en liste af film med et minimum antal stemmer
+    public List<Movie> getMoviesWithMinimumVotes(int minVoteCount) {
+        return movieDAO.getAllMovies().stream()
+                .filter(movie -> movie.getVoteCount() >= minVoteCount)
                 .collect(Collectors.toList());
     }
 }

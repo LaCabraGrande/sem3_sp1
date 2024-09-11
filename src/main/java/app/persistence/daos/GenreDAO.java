@@ -94,4 +94,10 @@ public class GenreDAO implements IDAO<Genre> {
     private EntityManager getEntityManager() {
         return emf.createEntityManager();
     }
+
+    public long countGenres() {
+        try (EntityManager em = emf.createEntityManager()) {
+            return em.createQuery("SELECT COUNT(g) FROM Genre g", Long.class).getSingleResult();
+        }
+    }
 }
