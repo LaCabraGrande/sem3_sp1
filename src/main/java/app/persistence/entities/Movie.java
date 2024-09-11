@@ -16,17 +16,17 @@ public class Movie {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    @Column(name = "imdb_id", nullable = false)
+    private Long imdbId;
+
     @Column(name = "title", nullable = false)
     private String title;
 
-    @Column(name = "overview")
+    @Column(name = "overview", length = 1000)  // Øger længden til tegn, da 255 tegn er for lidt som er standard
     private String overview;
 
     @Column(name = "release_date")
     private String releaseDate;
-
-    @Column(name = "rating")
-    private double rating;
 
     @Column(name = "adult")
     private boolean adult;

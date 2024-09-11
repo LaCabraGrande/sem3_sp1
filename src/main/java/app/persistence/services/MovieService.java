@@ -16,7 +16,7 @@ public class MovieService {
     public List<MovieDTO> getByRating(double rating) {
         // Filtrer filmene baseret på rating
         return movies.stream()
-                .filter(movie -> movie.getRating() >= rating)
+                .filter(movie -> movie.getVoteAverage() >= rating)
                 .collect(Collectors.toList());
     }
 

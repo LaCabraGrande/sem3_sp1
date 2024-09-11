@@ -20,6 +20,7 @@ import java.util.stream.Collectors;
 public class FilmFetcher {
     private static final String API_KEY = "8c82181ed8f9642ecd2de69b5e74dee0";
     private static final String BASE_API_URL = "https://api.themoviedb.org/3/discover/movie?api_key=" + API_KEY + "&language=da-DK&sort_by=popularity.desc&with_original_language=da&page=";
+    // Bruges ikke da jeg hardkoder genrerne fra et map
     private static final String GENRE_API_URL = "https://api.themoviedb.org/3/genre/movie/list?api_key=" + API_KEY + "&language=da-DK";
 
     @Getter
@@ -33,15 +34,16 @@ public class FilmFetcher {
     }
 
     public List<MovieDTO> fetchDanishMovies() throws IOException {
-        for (int page = 1; page <= 5; page++) {
+        for (int page = 1; page <= 500; page++) {
             String apiUrl = BASE_API_URL + page;
             String jsonResponse = fetchApiResponse(apiUrl);
-            System.out.println("jsonResponse: " + jsonResponse);
+            //System.out.println("jsonResponse: " + jsonResponse);
             extractMovies(jsonResponse);
         }
         return movieList;
     }
 
+    // Her henter jeg JSON data fra en URL
     private static String fetchApiResponse(String apiUrl) throws IOException, MalformedURLException {
         URL url = new URL(apiUrl);
         HttpURLConnection connection = (HttpURLConnection) url.openConnection();
@@ -60,15 +62,18 @@ public class FilmFetcher {
     private void extractMovies(String jsonResponse) {
         try {
             ObjectMapper mapper = new ObjectMapper();
+            //Her mapper jeg JSON data til et JsonNode objekt
             JsonNode rootNode = mapper.readTree(jsonResponse);
+            //Her henter jeg alle filmene fra JSON data
             JsonNode resultsNode = rootNode.path("results");
 
             for (JsonNode movieNode : resultsNode) {
+                //System.out.println("movieNode: " + movieNode);
                 String originalLanguage = movieNode.path("original_language").asText();
 
                 if ("da".equals(originalLanguage)) { // Filter Danish movies
                     MovieDTO movie = new MovieDTO();
-                    movie.setId((long) movieNode.path("id").asInt());
+                    movie.setImdbId(movieNode.path("id").asLong());
                     movie.setTitle(movieNode.path("title").asText());
                     movie.setOverview(movieNode.path("overview").asText());
                     movie.setReleaseDate(movieNode.path("release_date").asText());
@@ -77,7 +82,8 @@ public class FilmFetcher {
                     movie.setVoteCount(movieNode.path("vote_count").asInt());
                     movie.setBackdropPath(movieNode.path("backdrop_path").asText());
                     movie.setGenreIds(parseGenreIds(movieNode.path("genre_ids")));
-                    movie.setAdult(movieNode.path("adult").asBoolean());
+                    movie.setIsAdult(movieNode.path("adult").asBoolean());
+                    movie.setOriginalTitle(movieNode.path("original_title").asText());
                     movie.setPopularity(movieNode.path("popularity").asDouble());
                     movie.setOriginalLanguage(originalLanguage);
 
@@ -89,6 +95,7 @@ public class FilmFetcher {
         }
     }
 
+    // Her parser jeg genreIds fra JSON data og returnerer et Set af genreIds
     public Set<Integer> parseGenreIds(JsonNode genreIdsNode) {
         Set<Integer> genreIds = new HashSet<>();
         if (genreIdsNode.isArray()) {
@@ -102,23 +109,23 @@ public class FilmFetcher {
     private void initializeGenreMap() {
         // Hardkodede genrer
         genreMap.put(28, "Action");
-        genreMap.put(12, "Adventure");
+        genreMap.put(12, "Eventyr");
         genreMap.put(16, "Animation");
-        genreMap.put(35, "Comedy");
-        genreMap.put(80, "Crime");
-        genreMap.put(99, "Documentary");
+        genreMap.put(35, "Komedie");
+        genreMap.put(80, "Krimi");
+        genreMap.put(99, "Dokumentar");
         genreMap.put(18, "Drama");
-        genreMap.put(10751, "Family");
+        genreMap.put(10751, "Familie");
         genreMap.put(14, "Fantasy");
-        genreMap.put(36, "History");
-        genreMap.put(27, "Horror");
-        genreMap.put(10402, "Music");
+        genreMap.put(36, "Historie");
+        genreMap.put(27, "Gyser");
+        genreMap.put(10402, "Musik");
         genreMap.put(9648, "Mystery");
-        genreMap.put(10749, "Romance");
+        genreMap.put(10749, "Romantik");
         genreMap.put(878, "Science Fiction");
-        genreMap.put(10770, "TV Movie");
+        genreMap.put(10770, "TV-film");
         genreMap.put(53, "Thriller");
-        genreMap.put(10752, "War");
+        genreMap.put(10752, "Krig");
         genreMap.put(37, "Western");
     }
 
@@ -134,19 +141,7 @@ public class FilmFetcher {
         }
     }
 
-    private List<String> getGenreNames(List<Integer> genreIds) {
-        List<String> genreNames = new ArrayList<>();
-        for (Integer id : genreIds) {
-            String genreName = genreMap.get(id);
-            if (genreName != null) {
-                genreNames.add(genreName);
-            }
-        }
-        return genreNames;
-    }
-
-
-
+    // Her udskriver jeg JSON data for alle film
     public void printMovieJsonDataForAllMovies() throws Exception {
         List<MovieDTO> movies = fetchDanishMovies();
         ObjectMapper objectMapper = new ObjectMapper();

@@ -60,24 +60,29 @@ public class MovieDAO implements IDAO<Movie> {
         try {
             transaction.begin();
 
-            // Find existing Movie or create new one
-            Movie movie = em.find(Movie.class, dto.getId());
-            if (movie == null) {
-                movie = new Movie();
-            }
+            // Opret en ny Movie-entitet
+            Movie movie = new Movie();
 
-            movie.setId(dto.getId()); // Set ID for the movie
+            // Map værdier fra DTO til Movie-entiteten
+            movie.setImdbId(dto.getImdbId());
             movie.setTitle(dto.getTitle());
             movie.setOverview(dto.getOverview());
             movie.setReleaseDate(dto.getReleaseDate());
-            movie.setRating(dto.getRating() != null ? dto.getRating() : 0.0); // Handle null values
+            movie.setAdult(dto.getIsAdult() != null ? dto.getIsAdult() : false);  // Håndter null-værdier for adult
+            movie.setBackdropPath(dto.getBackdropPath());
             movie.setPosterPath(dto.getPosterPath());
-            movie.setVoteCount(dto.getVoteCount());
+            movie.setPopularity(dto.getPopularity() != null ? dto.getPopularity() : 0.0);  // Håndter null-værdier
+            movie.setOriginalLanguage(dto.getOriginalLanguage());
+            movie.setOriginalTitle(dto.getOriginalTitle());
+            movie.setVoteAverage(dto.getVoteAverage() != null ? dto.getVoteAverage() : 0.0);  // Håndter null-værdier
+            movie.setVoteCount(dto.getVoteCount() != null ? dto.getVoteCount() : 0);  // Håndter null-værdier
 
-            // Map genreIds to Genre entities
+            // Map genreIds fra DTO til Genre-entiteter
             Set<Genre> genres = dto.getGenreIds().stream()
                     .map(genreId -> {
-                        Genre genre = em.find(Genre.class, genreId);
+                        Genre genre = em.createQuery("SELECT g FROM Genre g WHERE g.genreId = :genreId", Genre.class)
+                                .setParameter("genreId", genreId)
+                                .getSingleResult();
                         if (genre == null) {
                             throw new IllegalStateException("Genre with ID " + genreId + " not found");
                         }
@@ -85,17 +90,21 @@ public class MovieDAO implements IDAO<Movie> {
                     })
                     .collect(Collectors.toSet());
 
+            // Sæt genres på Movie-entiteten
             movie.setGenres(genres);
 
-            // Use merge instead of persist
-            em.merge(movie);
+            // Brug persist for at oprette en ny Movie
+            em.persist(movie);
 
             transaction.commit();
         } catch (Exception e) {
-            transaction.rollback();
+            if (transaction.isActive()) {
+                transaction.rollback();
+            }
             throw e;
         }
     }
+
 
 
 

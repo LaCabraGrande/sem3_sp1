@@ -10,13 +10,12 @@ import java.util.Set;
 @Builder
 @Setter
 public class MovieDTO {
-
-    private Long id;
+    private Long databaseId;
+    private Long imdbId;
     private String title;
     private String overview;
     private String releaseDate;
-    private Double rating;
-    private Boolean adult;
+    private Boolean isAdult;
     private String backdropPath;
     private String posterPath;
     private Double popularity;
@@ -24,7 +23,6 @@ public class MovieDTO {
     private String originalTitle;
     private Double voteAverage;
     private Integer voteCount;
-    private Set<Integer> genreIds;  // Set of genre IDs
-    private List<String> genreNames; // Giv genreNames som List<String>
-
+    private Set<Integer> genreIds;
+    private List<String> genreNames;
 }
