@@ -1,6 +1,7 @@
 package app.persistence.fetcher;
 
 import app.persistence.enums.HibernateConfigState;
+import app.persistence.exceptions.JpaException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import app.persistence.dtos.MovieDTO;
@@ -8,12 +9,11 @@ import app.persistence.entities.Genre;
 import app.persistence.daos.GenreDAO;
 import lombok.Getter;
 
-import java.io.BufferedReader;
 import java.io.IOException;
-import java.io.InputStreamReader;
-import java.net.HttpURLConnection;
-import java.net.MalformedURLException;
-import java.net.URL;
+import java.net.URI;
+import java.net.http.HttpClient;
+import java.net.http.HttpRequest;
+import java.net.http.HttpResponse;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -21,7 +21,8 @@ public class FilmFetcher {
     private static final String API_KEY = "8c82181ed8f9642ecd2de69b5e74dee0";
     private static final String BASE_API_URL = "https://api.themoviedb.org/3/discover/movie?api_key=" + API_KEY + "&language=da-DK&sort_by=popularity.desc&with_original_language=da&page=";
     // Bruges ikke da jeg hardkoder genrerne fra et map
-    private static final String GENRE_API_URL = "https://api.themoviedb.org/3/genre/movie/list?api_key=" + API_KEY + "&language=da-DK";
+    // private static final String GENRE_API_URL = "https://api.themoviedb.org/3/genre/movie/list?api_key=" + API_KEY + "&language=da-DK";
+    private final HttpClient client = HttpClient.newHttpClient();
 
     @Getter
     private List<MovieDTO> movieList = new ArrayList<>();
@@ -33,32 +34,29 @@ public class FilmFetcher {
         initializeGenreMap();
     }
 
-    public List<MovieDTO> fetchDanishMovies() throws IOException {
+    // Henter danske film over 50 sider
+    public List<MovieDTO> fetchDanishMovies() throws IOException, InterruptedException {
         for (int page = 1; page <= 50; page++) {
             String apiUrl = BASE_API_URL + page;
             String jsonResponse = fetchApiResponse(apiUrl);
-            //System.out.println("jsonResponse: " + jsonResponse);
             extractMovies(jsonResponse);
         }
         return movieList;
     }
 
-    // Her henter jeg JSON data fra en URL
-    private static String fetchApiResponse(String apiUrl) throws IOException, MalformedURLException {
-        URL url = new URL(apiUrl);
-        HttpURLConnection connection = (HttpURLConnection) url.openConnection();
-        connection.setRequestMethod("GET");
+    // Bruger her HttpClient til at hente JSON respons
+    // Henter her JSON data fra APIen
+    private String fetchApiResponse(String apiUrl) throws IOException, InterruptedException {
+        HttpRequest request = HttpRequest.newBuilder()
+                .uri(URI.create(apiUrl))
+                .GET()
+                .build();
 
-        try (BufferedReader reader = new BufferedReader(new InputStreamReader(connection.getInputStream()))) {
-            StringBuilder response = new StringBuilder();
-            String line;
-            while ((line = reader.readLine()) != null) {
-                response.append(line);
-            }
-            return response.toString();
-        }
+        HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
+        return response.body();
     }
 
+    // Her trækker jeg filmene ud fra JSON data og adder dem til movieDTO-listen
     private void extractMovies(String jsonResponse) {
         try {
             ObjectMapper mapper = new ObjectMapper();
@@ -91,7 +89,7 @@ public class FilmFetcher {
                 }
             }
         } catch (Exception e) {
-            e.printStackTrace();
+            throw new JpaException("Error extracting movies from JSON data", e);
         }
     }
 
@@ -141,7 +139,7 @@ public class FilmFetcher {
         }
     }
 
-    // Her udskriver jeg JSON data for alle film
+    // Her udskriver jeg JSON data for alle film. Brugte denne metode i udviklingen til at teste JSON data
     public void printMovieJsonDataForAllMovies() throws Exception {
         List<MovieDTO> movies = fetchDanishMovies();
         ObjectMapper objectMapper = new ObjectMapper();
