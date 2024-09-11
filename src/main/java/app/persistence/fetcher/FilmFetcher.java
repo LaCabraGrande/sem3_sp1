@@ -159,6 +159,4 @@ public class FilmFetcher {
                 .map(Genre::getName)
                 .collect(Collectors.toList());
     }
-
-
 }

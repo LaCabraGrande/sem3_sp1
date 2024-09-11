@@ -64,11 +64,13 @@ public class Main {
         } catch (Exception e) {
             e.printStackTrace();
         } finally {
-            GenreDAO.close();  // Luk EntityManagerFactory, når du er færdig
-            MovieDAO.close();  // Sørg for at lukke MovieDAO også
+            // Luk EntityManagerFactory, når du er færdig
+            GenreDAO.close();
+            MovieDAO.close();
         }
     }
 
+    // Udskriver alle film der ligger i Databasen
     private static void printAllMoviesWithGenres(MovieDAO movieDAO) {
         List<Movie> movies = movieDAO.getAllMovies();
         for (Movie movie : movies) {
@@ -76,6 +78,7 @@ public class Main {
         }
     }
 
+    // Formatterer filmens detaljer med StringBuilder og returnerer en String
     private static String formatMovieDetails(Movie movie) {
         StringBuilder sb = new StringBuilder();
 
@@ -108,6 +111,7 @@ public class Main {
         return sb.toString();
     }
 
+    // Udskriver alle genrer i Databasen
     private static void printGenres(List<Genre> genres) {
         System.out.println("Genres List:");
         for (Genre genre : genres) {
