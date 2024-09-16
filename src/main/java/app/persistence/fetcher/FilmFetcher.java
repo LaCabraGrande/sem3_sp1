@@ -64,7 +64,7 @@ public class FilmFetcher {
             JsonNode rootNode = mapper.readTree(jsonResponse);
             //Her henter jeg alle filmene fra JSON data
             JsonNode resultsNode = rootNode.path("results");
-
+            System.out.println("resultsNode: " + resultsNode+" size: "+resultsNode.size());
             for (JsonNode movieNode : resultsNode) {
                 //System.out.println("movieNode: " + movieNode);
                 String originalLanguage = movieNode.path("original_language").asText();

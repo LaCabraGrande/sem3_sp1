@@ -19,7 +19,7 @@ public class Main {
         MovieService movieService = new MovieService(movieDAO);
 
         try{
-            List<MovieDTO> danishMovies = null;
+            List<MovieDTO> danishMovies;
 
             // Kontroller om tabellerne er tomme inden jeg opretter dem
             fetcher.populateGenres();
@@ -92,7 +92,7 @@ public class Main {
             sb.append("Genrer: ");
             movie.getGenres().forEach(genre -> sb.append(genre.getName()).append(", "));
             // Fjern den sidste komma og mellemrum
-            if (sb.length() > 0) {
+            if (!sb.isEmpty()) {
                 sb.setLength(sb.length() - 2);
             }
             sb.append("\n");
