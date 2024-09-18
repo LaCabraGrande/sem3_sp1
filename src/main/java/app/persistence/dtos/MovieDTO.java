@@ -1,6 +1,7 @@
 package app.persistence.dtos;
 
 import lombok.*;
+
 import java.util.List;
 import java.util.Set;
 
@@ -9,6 +10,7 @@ import java.util.Set;
 @Data
 @Builder
 @Setter
+@ToString
 public class MovieDTO {
     private Long databaseId;
     private Long imdbId;
@@ -25,4 +27,8 @@ public class MovieDTO {
     private Integer voteCount;
     private Set<Integer> genreIds;
     private List<String> genreNames;
+
+    // Ny felter for skuespillere og instruktører
+    private Set<ActorDTO> actors;
+    private DirectorDTO director;
 }

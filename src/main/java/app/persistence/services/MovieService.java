@@ -2,13 +2,17 @@ package app.persistence.services;
 
 import app.persistence.daos.MovieDAO;
 import app.persistence.entities.Movie;
+import com.fasterxml.jackson.databind.ObjectMapper;
+
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
+import app.persistence.apis.MovieAPI;
 
 public class MovieService {
 
     private final MovieDAO movieDAO;
+    private final ObjectMapper mapper = new ObjectMapper();
 
     public MovieService(MovieDAO movieDAO) {
         this.movieDAO = movieDAO;
@@ -41,5 +45,10 @@ public class MovieService {
         return movieDAO.getAllMovies().stream()
                 .filter(movie -> movie.getVoteCount() >= minVoteCount)
                 .collect(Collectors.toList());
+    }
+
+    // Metode til at konvertere en liste af Movie til JSON
+    public String convertMoviesToJson(List<MovieAPI> movies) throws Exception {
+        return mapper.writeValueAsString(movies);
     }
 }

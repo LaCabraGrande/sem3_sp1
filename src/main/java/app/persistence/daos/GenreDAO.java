@@ -1,22 +1,25 @@
 package app.persistence.daos;
 import app.persistence.config.HibernateConfig;
+import app.persistence.dtos.ActorDTO;
+import app.persistence.dtos.DirectorDTO;
 import app.persistence.dtos.MovieDTO;
 import app.persistence.enums.HibernateConfigState;
 import app.persistence.exceptions.JpaException;
 import jakarta.persistence.*;
 import app.persistence.dtos.GenreDTO;
 import app.persistence.entities.Genre;
+import java.util.stream.Collectors;
 
 import java.util.List;
 import java.util.Set;
 
-public class GenreDAO implements IDAO<Genre> {
+public class GenreDAO {
 
     private static GenreDAO instance;
     private static EntityManagerFactory emf;
     private EntityManager em;
 
-    private GenreDAO() {
+    public GenreDAO() {
         em = emf.createEntityManager();
     }
 
@@ -34,12 +37,12 @@ public class GenreDAO implements IDAO<Genre> {
         }
     }
 
-    @Override
+
     public Genre findById(Long id) {
         return em.find(Genre.class, id);
     }
 
-    @Override
+
     public Genre update(Genre genre) {
         EntityTransaction transaction = em.getTransaction();
         try (EntityManager em = emf.createEntityManager()) {
@@ -53,17 +56,7 @@ public class GenreDAO implements IDAO<Genre> {
         }
     }
 
-    @Override
-    public void create(MovieDTO dto) {
 
-    }
-
-    @Override
-    public void create(GenreDTO dto) {
-
-    }
-
-    @Override
     public void create(Genre genre) {
         EntityTransaction transaction = em.getTransaction();
         try (EntityManager em = emf.createEntityManager()) {
@@ -76,20 +69,20 @@ public class GenreDAO implements IDAO<Genre> {
         }
     }
 
-    @Override
-    public List<Genre> getAllMovies() {
-        return em.createQuery("SELECT g FROM Genre g", Genre.class).getResultList();
-    }
 
-    public List<Genre> findGenresByIds(Set<Integer> genreIds) {
+    public Set<Genre> findGenresByIds(Set<Integer> genreIds) {
         try (EntityManager em = emf.createEntityManager()) {
             return em.createQuery("SELECT g FROM Genre g WHERE g.genreId IN :ids", Genre.class)
                     .setParameter("ids", genreIds)
-                    .getResultList();
+                    .getResultStream() // Brug getResultStream for at få en stream af resultater
+                    .collect(Collectors.toSet()); // Saml resultaterne i et Set
         } catch (Exception e) {
             throw new JpaException("An error occurred while fetching genres by ids", e);
         }
     }
+
+
+
 
     private EntityManager getEntityManager() {
         return emf.createEntityManager();

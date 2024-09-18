@@ -1,7 +1,6 @@
 package app.persistence.config;
 
-import app.persistence.entities.Genre;
-import app.persistence.entities.Movie;
+import app.persistence.entities.*;
 import app.persistence.enums.HibernateConfigState;
 import jakarta.persistence.EntityManagerFactory;
 import lombok.NoArgsConstructor;
@@ -9,8 +8,6 @@ import org.hibernate.SessionFactory;
 import org.hibernate.boot.registry.StandardServiceRegistryBuilder;
 import org.hibernate.cfg.Configuration;
 import org.hibernate.service.ServiceRegistry;
-
-
 import java.util.Properties;
 
 @NoArgsConstructor(access = lombok.AccessLevel.PRIVATE)
@@ -35,7 +32,9 @@ public class HibernateConfig {
         // add annotated classes --- remember to add new entities here
         configuration.addAnnotatedClass(Movie.class);
         configuration.addAnnotatedClass(Genre.class);
-
+        configuration.addAnnotatedClass(Actor.class);
+        configuration.addAnnotatedClass(Director.class);
+        configuration.addAnnotatedClass(GenreData.class);
     }
 
     private static EntityManagerFactory buildEntityFactoryConfig() {
@@ -54,7 +53,7 @@ public class HibernateConfig {
             props.put("hibernate.connection.driver_class", "org.postgresql.Driver"); // driver class for postgresql
             props.put("hibernate.archive.autodetection", "class"); // hibernate scans for annotated classes
             props.put("hibernate.current_session_context_class", "thread"); // hibernate current session context
-            props.put("hibernate.hbm2ddl.auto", "create"); // hibernate creates tables based on entities
+            props.put("hibernate.hbm2ddl.auto", "update"); // hibernate creates tables based on entities
             return getEntityManagerFactory(configuration, props);
         }
         catch (Throwable ex) {

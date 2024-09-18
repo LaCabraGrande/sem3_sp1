@@ -1,5 +1,5 @@
 package app.persistence.enums;
 
 public enum HibernateConfigState {
-    NORMAL, TEST
+    NORMAL, TEST, PRODUCTION
 }

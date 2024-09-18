@@ -1,15 +1,20 @@
 package app.persistence.entities;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonManagedReference;
 import jakarta.persistence.*;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.*;
+
+import java.util.Objects;
 import java.util.Set;
-import java.util.stream.Collectors;
 
 @Entity
 @Table(name = "movie")
 @Data
 @NoArgsConstructor
+@AllArgsConstructor
+@Builder
+@ToString
 public class Movie {
 
     @Id
@@ -22,7 +27,7 @@ public class Movie {
     @Column(name = "title", nullable = false)
     private String title;
 
-    @Column(name = "overview", length = 1000)  // Øger længden til tegn, da 255 tegn er for lidt som er standard
+    @Column(name = "overview", length = 1000)
     private String overview;
 
     @Column(name = "release_date")
@@ -52,17 +57,44 @@ public class Movie {
     @Column(name = "vote_count")
     private int voteCount;
 
-    @ManyToMany
+    // Relation til Genre
+    @ManyToMany(fetch = FetchType.EAGER)
     @JoinTable(
             name = "movie_genre",
             joinColumns = @JoinColumn(name = "movie_id"),
             inverseJoinColumns = @JoinColumn(name = "genre_id")
     )
+    @ToString.Exclude
+    @JsonManagedReference // Denne styrer serialisering af relationen
     private Set<Genre> genres;
 
-    public Set<Integer> getGenreIds() {
-        return genres.stream()
-                .map(Genre::getGenreId)
-                .collect(Collectors.toSet());
+    // Relation til Director
+    @ManyToOne(optional = true)
+    @JoinColumn(name = "director_id", referencedColumnName = "id")
+    @ToString.Exclude
+    private Director director;
+
+    // Relation til Actors
+    @ManyToMany(fetch = FetchType.EAGER)
+    @JoinTable(
+            name = "movie_actor",
+            joinColumns = @JoinColumn(name = "movie_id"),
+            inverseJoinColumns = @JoinColumn(name = "actor_id")
+    )
+    @JsonManagedReference // Denne styrer serialisering af relationen
+    @ToString.Exclude
+    private Set<Actor> actors;
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        Movie movie = (Movie) o;
+        return Objects.equals(id, movie.id);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(id);
     }
 }

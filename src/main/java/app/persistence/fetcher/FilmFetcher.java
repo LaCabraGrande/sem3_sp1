@@ -1,12 +1,13 @@
 package app.persistence.fetcher;
 
-import app.persistence.enums.HibernateConfigState;
-import app.persistence.exceptions.JpaException;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import app.persistence.dtos.ActorDTO;
+import app.persistence.dtos.DirectorDTO;
 import app.persistence.dtos.MovieDTO;
 import app.persistence.entities.Genre;
 import app.persistence.daos.GenreDAO;
+import app.persistence.exceptions.JpaException;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.Getter;
 
 import java.io.IOException;
@@ -15,85 +16,170 @@ import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.util.*;
+import java.util.logging.Logger;
 import java.util.stream.Collectors;
 
 public class FilmFetcher {
-    //private static final String API_KEY = "8c82181ed8f9642ecd2de69b5e74dee0";
+    private static final Logger LOGGER = Logger.getLogger(FilmFetcher.class.getName());
     private static final String API_KEY = System.getenv("API_KEY");
     private static final String BASE_API_URL = "https://api.themoviedb.org/3/discover/movie?api_key=" + API_KEY + "&language=da-DK&sort_by=popularity.desc&with_original_language=da&page=";
-    // Bruges ikke da jeg hardkoder genrerne fra et map
-    // private static final String GENRE_API_URL = "https://api.themoviedb.org/3/genre/movie/list?api_key=" + API_KEY + "&language=da-DK";
+
     private final HttpClient client = HttpClient.newHttpClient();
+    private final ObjectMapper objectMapper = new ObjectMapper();
 
     @Getter
     private List<MovieDTO> movieList = new ArrayList<>();
+    @Getter
     private Map<Integer, String> genreMap = new HashMap<>();
-    private GenreDAO genreDAO;
+    private final GenreDAO genreDAO;
 
     public FilmFetcher(GenreDAO genreDAO) {
         this.genreDAO = genreDAO;
         initializeGenreMap();
     }
 
-    // Henter danske film over 50 sider
     public List<MovieDTO> fetchDanishMovies() throws IOException, InterruptedException {
-        for (int page = 1; page <= 25; page++) {
+        int page = 1;
+        boolean hasMorePages = true;
+
+        while (hasMorePages) {
             String apiUrl = BASE_API_URL + page;
+            LOGGER.info("Fetching URL: " + apiUrl);
             String jsonResponse = fetchApiResponse(apiUrl);
-            extractMovies(jsonResponse);
+            LOGGER.info("API Response: " + jsonResponse);
+
+            JsonNode rootNode = objectMapper.readTree(jsonResponse);
+            JsonNode resultsNode = rootNode.path("results");
+            JsonNode totalPagesNode = rootNode.path("total_pages");
+
+            if (resultsNode.isEmpty()) {
+                LOGGER.info("No more results found.");
+                hasMorePages = false;
+            } else {
+                LOGGER.info("Number of results fetched: " + resultsNode.size());
+                extractMovies(resultsNode);
+
+                // Tilføj detaljer om skuespillere og instruktør til hver film
+                for (MovieDTO movie : movieList) {
+                    try {
+                        MovieDTO detailedMovie = fetchMovieWithDetails(movie.getImdbId());
+                        movie.setActors(detailedMovie.getActors());
+                        movie.setDirector(detailedMovie.getDirector());
+                    } catch (IOException | InterruptedException e) {
+                        LOGGER.warning("Failed to fetch details for movie ID: " + movie.getImdbId() + ": " + e.getMessage());
+                    }
+                }
+                page++;
+                if (page > totalPagesNode.asInt()) {
+                    LOGGER.info("Reached the last page.");
+                    hasMorePages = false;
+                }
+            }
         }
         return movieList;
     }
 
-    // Bruger her HttpClient til at hente JSON respons
-    // Henter her JSON data fra APIen
+    // Hent detaljer om en film inklusive skuespillere og instruktør
+    public MovieDTO fetchMovieWithDetails(Long movieId) throws IOException, InterruptedException {
+        String movieUrl = "https://api.themoviedb.org/3/movie/" + movieId + "?api_key=" + API_KEY + "&language=da-DK";
+        String creditsUrl = "https://api.themoviedb.org/3/movie/" + movieId + "/credits?api_key=" + API_KEY;
+
+        String movieJsonResponse = fetchApiResponse(movieUrl);
+        String creditsJsonResponse = fetchApiResponse(creditsUrl);
+
+        JsonNode movieJson = objectMapper.readTree(movieJsonResponse);
+        JsonNode creditsJson = objectMapper.readTree(creditsJsonResponse);
+
+        MovieDTO movieDTO = MovieDTO.builder()
+                .imdbId(movieJson.get("id").asLong())
+                .title(movieJson.get("title").asText())
+                .overview(movieJson.get("overview").asText())
+                .releaseDate(movieJson.get("release_date").asText())
+                .isAdult(movieJson.get("adult").asBoolean())
+                .backdropPath(movieJson.get("backdrop_path").asText())
+                .posterPath(movieJson.get("poster_path").asText())
+                .popularity(movieJson.get("popularity").asDouble())
+                .originalLanguage(movieJson.get("original_language").asText())
+                .originalTitle(movieJson.get("original_title").asText())
+                .voteAverage(movieJson.get("vote_average").asDouble())
+                .voteCount(movieJson.get("vote_count").asInt())
+                .genreIds(parseGenreIds(movieJson.path("genres")))
+                .build();
+
+        addActorsAndDirector(movieDTO, creditsJson);
+
+        return movieDTO;
+    }
+
     private String fetchApiResponse(String apiUrl) throws IOException, InterruptedException {
         HttpRequest request = HttpRequest.newBuilder()
                 .uri(URI.create(apiUrl))
                 .GET()
                 .build();
         HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
-        return response.body();
+
+        if (response.statusCode() == 200) {
+            return response.body();
+        } else {
+            LOGGER.warning("Failed to fetch API response. Status code: " + response.statusCode());
+            throw new IOException("Failed to fetch API response. Status code: " + response.statusCode());
+        }
     }
 
-    // Her trækker jeg filmene ud fra JSON data og adder dem til movieDTO-listen
-    private void extractMovies(String jsonResponse) {
+    private void addActorsAndDirector(MovieDTO movieDTO, JsonNode creditsJson) {
+        DirectorDTO directorDTO = null;
+        for (JsonNode crewMember : creditsJson.get("crew")) {
+            if ("Director".equals(crewMember.get("job").asText())) {
+                directorDTO = DirectorDTO.builder()
+                        .id(crewMember.get("id").asLong())
+                        .name(crewMember.get("name").asText())
+                        .build();
+                break;
+            }
+        }
+        movieDTO.setDirector(directorDTO);
+
+        Set<ActorDTO> actorDTOSet = new HashSet<>();
+        for (JsonNode actor : creditsJson.get("cast")) {
+            ActorDTO actorDTO = ActorDTO.builder()
+                    .id(actor.get("id").asLong())
+                    .name(actor.get("name").asText())
+                    .build();
+            actorDTOSet.add(actorDTO);
+        }
+        movieDTO.setActors(actorDTOSet);
+    }
+
+    private void extractMovies(JsonNode resultsNode) {
         try {
-            ObjectMapper mapper = new ObjectMapper();
-            //Her mapper jeg JSON data til et JsonNode objekt
-            JsonNode rootNode = mapper.readTree(jsonResponse);
-            //Her henter jeg alle filmene fra JSON data
-            JsonNode resultsNode = rootNode.path("results");
-            System.out.println("resultsNode: " + resultsNode+" size: "+resultsNode.size());
             for (JsonNode movieNode : resultsNode) {
-                //System.out.println("movieNode: " + movieNode);
                 String originalLanguage = movieNode.path("original_language").asText();
 
-                if ("da".equals(originalLanguage)) { // Filter Danish movies
-                    MovieDTO movie = new MovieDTO();
-                    movie.setImdbId(movieNode.path("id").asLong());
-                    movie.setTitle(movieNode.path("title").asText());
-                    movie.setOverview(movieNode.path("overview").asText());
-                    movie.setReleaseDate(movieNode.path("release_date").asText());
-                    movie.setPosterPath(movieNode.path("poster_path").asText());
-                    movie.setVoteAverage(movieNode.path("vote_average").asDouble());
-                    movie.setVoteCount(movieNode.path("vote_count").asInt());
-                    movie.setBackdropPath(movieNode.path("backdrop_path").asText());
-                    movie.setGenreIds(parseGenreIds(movieNode.path("genre_ids")));
-                    movie.setIsAdult(movieNode.path("adult").asBoolean());
-                    movie.setOriginalTitle(movieNode.path("original_title").asText());
-                    movie.setPopularity(movieNode.path("popularity").asDouble());
-                    movie.setOriginalLanguage(originalLanguage);
-
-                    movieList.add(movie);
+                if ("da".equals(originalLanguage)) { // Filtrér danske film
+                    MovieDTO movieDTO = MovieDTO.builder()
+                            .imdbId(movieNode.path("id").asLong())
+                            .title(movieNode.path("title").asText())
+                            .overview(movieNode.path("overview").asText())
+                            .releaseDate(movieNode.path("release_date").asText())
+                            .posterPath(movieNode.path("poster_path").asText())
+                            .voteAverage(movieNode.path("vote_average").asDouble())
+                            .voteCount(movieNode.path("vote_count").asInt())
+                            .backdropPath(movieNode.path("backdrop_path").asText())
+                            .genreIds(parseGenreIds(movieNode.path("genre_ids")))
+                            .isAdult(movieNode.path("adult").asBoolean())
+                            .originalTitle(movieNode.path("original_title").asText())
+                            .popularity(movieNode.path("popularity").asDouble())
+                            .originalLanguage(originalLanguage)
+                            .build();
+                    movieList.add(movieDTO);
                 }
             }
         } catch (Exception e) {
+            LOGGER.severe("Error extracting movies from JSON data: " + e.getMessage());
             throw new JpaException("Error extracting movies from JSON data", e);
         }
     }
 
-    // Her parser jeg genreIds fra JSON data og returnerer et Set af genreIds
     public Set<Integer> parseGenreIds(JsonNode genreIdsNode) {
         Set<Integer> genreIds = new HashSet<>();
         if (genreIdsNode.isArray()) {
@@ -105,7 +191,6 @@ public class FilmFetcher {
     }
 
     private void initializeGenreMap() {
-        // Hardkodede genrer
         genreMap.put(28, "Action");
         genreMap.put(12, "Eventyr");
         genreMap.put(16, "Animation");
@@ -127,7 +212,7 @@ public class FilmFetcher {
         genreMap.put(37, "Western");
     }
 
-    public void populateGenres() {
+    public void populateGenres() throws JpaException {
         for (Map.Entry<Integer, String> entry: genreMap.entrySet()) {
             int genreId = entry.getKey();
             String name = entry.getValue();
@@ -135,26 +220,21 @@ public class FilmFetcher {
             Genre genre = new Genre();
             genre.setGenreId(genreId);
             genre.setName(name);
-            genreDAO.create(genre);
+            try {
+                genreDAO.create(genre); // Hvis genreDAO.create accepterer Genre entiteten
+            } catch (Exception e) {
+                LOGGER.severe("Failed to create genre with ID " + entry.getKey() + " and name " + entry.getValue() + ": " + e.getMessage());
+                throw new JpaException("Failed to create genre with ID " + entry.getKey() + " and name " + entry.getValue(), e);
+            }
         }
     }
 
-    // Her udskriver jeg JSON data for alle film. Brugte denne metode i udviklingen til at teste JSON data
-    public void printMovieJsonDataForAllMovies() throws Exception {
-        List<MovieDTO> movies = fetchDanishMovies();
-        ObjectMapper objectMapper = new ObjectMapper();
-
-        for (MovieDTO movie : movies) {
-            movie.setGenreNames(getGenreNames(movie.getGenreIds()));
-            String json = objectMapper.writeValueAsString(movie);
-            System.out.println("Movie JSON Data: " + json);
-        }
-    }
-
+    // Hent genre-navne baseret på genre-IDs
     public List<String> getGenreNames(Set<Integer> genreIds) {
-        GenreDAO genreDAO = GenreDAO.getInstance(HibernateConfigState.TEST); // Skift til korrekt state
-        return genreDAO.findGenresByIds(genreIds).stream()
-                .map(Genre::getName)
+        return genreIds.stream()
+                .map(genreId -> genreMap.getOrDefault(genreId, "Unknown Genre"))
                 .collect(Collectors.toList());
     }
+
+
 }
