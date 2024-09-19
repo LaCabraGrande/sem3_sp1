@@ -53,10 +53,10 @@ public class FilmFetcher {
             JsonNode totalPagesNode = rootNode.path("total_pages");
 
             if (resultsNode.isEmpty()) {
-                LOGGER.info("No more results found.");
+                LOGGER.info("Ikke flere resultater hentet.");
                 hasMorePages = false;
             } else {
-                LOGGER.info("Number of results fetched: " + resultsNode.size());
+                LOGGER.info("Antallet af resultater hentet: " + resultsNode.size());
                 extractMovies(resultsNode);
 
                 // Tilføj detaljer om skuespillere og instruktør til hver film
@@ -66,12 +66,12 @@ public class FilmFetcher {
                         movie.setActors(detailedMovie.getActors());
                         movie.setDirector(detailedMovie.getDirector());
                     } catch (IOException | InterruptedException e) {
-                        LOGGER.warning("Failed to fetch details for movie ID: " + movie.getImdbId() + ": " + e.getMessage());
+                        LOGGER.warning("Kunne ikke hente detaljer for film-ID: " + movie.getImdbId() + ": " + e.getMessage());
                     }
                 }
                 page++;
                 if (page > totalPagesNode.asInt()) {
-                    LOGGER.info("Reached the last page.");
+                    LOGGER.info("Nåede til den sidste side.");
                     hasMorePages = false;
                 }
             }
@@ -121,8 +121,8 @@ public class FilmFetcher {
         if (response.statusCode() == 200) {
             return response.body();
         } else {
-            LOGGER.warning("Failed to fetch API response. Status code: " + response.statusCode());
-            throw new IOException("Failed to fetch API response. Status code: " + response.statusCode());
+            LOGGER.warning("Kunne ikke hente API-svaret. Statuskode: " + response.statusCode());
+            throw new IOException("Kunne ikke hente API-svaret. Statuskode: " + response.statusCode());
         }
     }
 
@@ -175,8 +175,8 @@ public class FilmFetcher {
                 }
             }
         } catch (Exception e) {
-            LOGGER.severe("Error extracting movies from JSON data: " + e.getMessage());
-            throw new JpaException("Error extracting movies from JSON data", e);
+            LOGGER.severe("Fejl ved udtrækning af data fra JSON data" + e.getMessage());
+            throw new JpaException("Fejl ved udtrækning af data fra JSON data", e);
         }
     }
 
@@ -223,8 +223,8 @@ public class FilmFetcher {
             try {
                 genreDAO.create(genre); // Hvis genreDAO.create accepterer Genre entiteten
             } catch (Exception e) {
-                LOGGER.severe("Failed to create genre with ID " + entry.getKey() + " and name " + entry.getValue() + ": " + e.getMessage());
-                throw new JpaException("Failed to create genre with ID " + entry.getKey() + " and name " + entry.getValue(), e);
+                LOGGER.severe("Kunne ikke oprette genre med ID " + entry.getKey() + " og navn " + entry.getValue() + ": " + e.getMessage());
+                throw new JpaException("Kunne ikke oprette genre med ID " + entry.getKey() + " og navn " + entry.getValue(), e);
             }
         }
     }

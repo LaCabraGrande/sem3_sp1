@@ -34,49 +34,40 @@ public class FilmService {
 
     public void fetchAndSaveMovies() {
         try {
-            // Fetch movies from FilmFetcher
             List<MovieDTO> movieDTOList = filmFetcher.fetchDanishMovies();
             System.out.println("Fetched " + movieDTOList.size() + " movies");
 
-            // Process each movie DTO
             for (MovieDTO movieDTO : movieDTOList) {
                 try {
                     saveMovieWithDetails(movieDTO);
                 } catch (Exception innerException) {
-                    // Log individual movie save errors
-                    System.err.println("Error saving movie: " + innerException.getMessage());
+                    System.err.println("Fejl når jeg gemmer filmen: " + innerException.getMessage());
                 }
             }
         } catch (Exception e) {
-            // Log the error that occurred during fetching
-            System.err.println("Error fetching movies: " + e.getMessage());
-            throw new JpaException("Error fetching and saving movies", e);
+            System.err.println("Fejl når jeg henter en film: " + e.getMessage());
+            throw new JpaException("Fejl når jeg henter en film: ", e);
         }
     }
 
     private void saveMovieWithDetails(MovieDTO movieDTO) {
-        // Check if the movie already exists in the database
+        // Her undersøger jeg om filmen allerede eksisterer i databasen
         Movie existingMovie = movieDAO.findByTitle(movieDTO.getTitle());
 
         if (existingMovie == null) {
-            // Handle genreIds and update genreNames
             Set<Integer> genreIds = movieDTO.getGenreIds();
             List<String> genreNames = filmFetcher.getGenreNames(genreIds);
 
             movieDTO.setGenreNames(genreNames);
 
-            // Handle Director
             DirectorDTO directorDTO = handleDirector(movieDTO);
             movieDTO.setDirector(directorDTO);
 
-            // Handle Actors
             Set<ActorDTO> actorDTOs = handleActors(movieDTO);
             movieDTO.setActors(actorDTOs);
 
-            // Convert MovieDTO to Movie entity
+            // Konverterer MovieDTO til Movie entity
             Movie movie = convertToEntity(movieDTO);
-
-            // Save Movie entity to the database via DAO
 
             movieDAO.create(movie);
         }
@@ -97,15 +88,13 @@ public class FilmService {
         movie.setVoteAverage(movieDTO.getVoteAverage());
         movie.setVoteCount(movieDTO.getVoteCount());
 
-        // Handle genres
         Set<Genre> genres = genreDAO.findGenresByIds(movieDTO.getGenreIds());
         movie.setGenres(genres);
 
-        // Handle actors
         Set<Actor> actors = new HashSet<>();
         for (ActorDTO actorDTO : movieDTO.getActors()) {
 
-            // Create new Actor entity
+            // Opretter en ny Actor entity
             Actor newActor = new Actor();
             newActor.setId(actorDTO.getId());
             newActor.setName(actorDTO.getName());
@@ -116,42 +105,36 @@ public class FilmService {
         }
         movie.setActors(actors);
 
-        // Convert DirectorDTO to Director entity
+        // Konverterer DirectorDTO til Director entity
         Director director = convertToDirectorEntity(movieDTO.getDirector());
         movie.setDirector(director);
 
         return movie;
     }
 
-
-
     private DirectorDTO handleDirector(MovieDTO movieDTO) {
-        // Handle Director if available in DTO
+        // Undsøger her om der allerede er en instruktør sat
         if (movieDTO.getDirector() != null) {
             return movieDTO.getDirector();
         }
-        return new DirectorDTO(); // Return a new empty DirectorDTO if not present
+        return new DirectorDTO();
     }
 
     private Set<ActorDTO> handleActors(MovieDTO movieDTO) {
         // Kontrollér om actors allerede er sat
         if (movieDTO.getActors() != null && !movieDTO.getActors().isEmpty()) {
-            //System.out.println("Actors already set: " + movieDTO.getActors());
             return movieDTO.getActors();
         }
 
-        // Hvis der ikke er skuespillere, returner et tomt sæt
-        System.out.println("No actors found, returning empty set.");
+        // Hvis der ikke er skuespillere tilknyttet, returner jeg her et tomt sæt
+        System.out.println("Ingen skuespillere fundet, returnerer et tomt sæt.");
         return new HashSet<>();
     }
-
 
     private Director convertToDirectorEntity(DirectorDTO directorDTO) {
         Director director = new Director();
         director.setId(directorDTO.getId());
         director.setName(directorDTO.getName());
-        // Hvis der er flere felter, tilføj dem her
         return director;
     }
-
 }

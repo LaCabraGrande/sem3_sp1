@@ -107,6 +107,154 @@ public class MovieDAO {
         return null;
     }
 
+    // Tilføjer en ny film til databasen
+    public void createMovie(Movie movie) {
+        try (EntityManager em = emf.createEntityManager()) {
+            try {
+                em.getTransaction().begin();
+                em.persist(movie);
+                em.getTransaction().commit();
+            } catch (Exception e) {
+                if (em.getTransaction().isActive()) {
+                    em.getTransaction().rollback();
+                }
+                e.printStackTrace();
+            }
+        }
+    }
+    public long countMovies() {
+        try (EntityManager em = emf.createEntityManager()) {
+            // Start transaktionen
+            em.getTransaction().begin();
+
+            // Forespørgsel til at tælle antallet af film
+            TypedQuery<Long> query = em.createQuery("SELECT COUNT(m) FROM Movie m", Long.class);
+            long count = query.getSingleResult();
+
+            // Commit transaktionen
+            em.getTransaction().commit();
+
+            return count;
+        } catch (Exception e) {
+            e.printStackTrace();
+            throw new JpaException("Der er opstået en fejl ved optælling af filmene i databasen.", e);
+        }
+    }
+
+
+    // Metode til at opdatere release-date for en film baseret på titlen
+    public void updateReleaseDateByTitle(String title, String newReleaseDate) {
+        try (EntityManager em = emf.createEntityManager()) {
+            EntityTransaction transaction = em.getTransaction();
+            try {
+                // Find filmen baseret på titlen
+                Movie movie = em.createQuery("SELECT m FROM Movie m WHERE m.title = :title", Movie.class)
+                        .setParameter("title", title)
+                        .getSingleResult();
+
+                if (movie != null) {
+                    transaction.begin();
+                    // Opdater filmens release-date
+                    movie.setReleaseDate(newReleaseDate);
+                    // Gem opdateringen i databasen
+                    em.merge(movie);
+                    transaction.commit();
+                    System.out.println("Filmen " + movie.getTitle() + " er opdateret med ny release-date: " + newReleaseDate);
+                }
+            } catch (Exception e) {
+                if (transaction.isActive()) {
+                    transaction.rollback();
+                }
+                throw new JpaException("Fejl ved opdatering af release-date for filmen "+title, e);
+            }
+        }
+    }
+
+    // Metode til at slette en film baseret på titlen
+    public void deleteByTitle(String title) {
+        EntityTransaction transaction = null;
+        try (EntityManager em = emf.createEntityManager()) {
+            transaction = em.getTransaction();
+            try {
+                transaction.begin();
+
+                // Find filmen baseret på titlen
+                Movie movie = em.createQuery("SELECT m FROM Movie m WHERE m.title = :title", Movie.class)
+                        .setParameter("title", title)
+                        .getSingleResult();
+
+                if (movie != null) {
+                    // Slet filmen fra databasen
+                    em.remove(movie);
+                    transaction.commit();
+                    System.out.println("Filmen " + movie.getTitle() + " er slettet fra databasen");
+                } else {
+                    System.out.println("Ingen film fundet med titlen: " + title);
+                    if (transaction.isActive()) {
+                        transaction.rollback();
+                    }
+                }
+            } catch (NoResultException e) {
+                System.out.println("Ingen film fundet med titlen: " + title);
+                if (transaction != null && transaction.isActive()) {
+                    transaction.rollback();
+                }
+            } catch (Exception e) {
+                if (transaction != null && transaction.isActive()) {
+                    transaction.rollback();
+                }
+                throw new JpaException("Fejl ved sletning af filmen " + title, e);
+            }
+        }
+    }
+
+
+    // Metode til at søge efter film baseret på en del af titlen (case-insensitive)
+    public List<Movie> searchMoviesByTitle(String searchString) {
+        try (EntityManager em = emf.createEntityManager()) {
+            // Lav søgningen case-insensitive med LOWER() og brug LIKE til delmatch
+            return em.createQuery("SELECT m FROM Movie m WHERE LOWER(m.title) LIKE LOWER(:searchString)", Movie.class)
+                    .setParameter("searchString", "%" + searchString + "%")  // Brug '%' til at matche delstrenge
+                    .getResultList();
+        }
+    }
+
+    // Få den gennemsnitlige rating af alle film
+    public double getTotalAverageRating() {
+        try (EntityManager em = emf.createEntityManager()) {
+            Double averageRating = em.createQuery("SELECT AVG(m.voteAverage) FROM Movie m", Double.class)
+                    .getSingleResult();
+            return averageRating != null ? averageRating : 0.0;  // Hvis der ikke er film, returneres 0.0
+        }
+    }
+
+    // Få de top-10 laveste ratede film
+    public List<Movie> getTop10LowestRatedMovies() {
+        try (EntityManager em = emf.createEntityManager()) {
+            return em.createQuery("SELECT m FROM Movie m ORDER BY m.voteAverage ASC", Movie.class)
+                    .setMaxResults(10)
+                    .getResultList();
+        }
+    }
+
+    // Få de top-10 højeste ratede film
+    public List<Movie> getTop10HighestRatedMovies() {
+        try (EntityManager em = emf.createEntityManager()) {
+            return em.createQuery("SELECT m FROM Movie m ORDER BY m.voteAverage DESC", Movie.class)
+                    .setMaxResults(10)
+                    .getResultList();
+        }
+    }
+
+    // Få de top-10 mest populære film
+    public List<Movie> getTop10MostPopularMovies() {
+        try (EntityManager em = emf.createEntityManager()) {
+            return em.createQuery("SELECT m FROM Movie m ORDER BY m.popularity DESC", Movie.class)
+                    .setMaxResults(10)
+                    .getResultList();
+        }
+    }
+
     public Movie update(Movie movie) {
         try (EntityManager em = emf.createEntityManager()) {
             EntityTransaction transaction = em.getTransaction();
@@ -123,6 +271,108 @@ public class MovieDAO {
             }
         }
     }
+
+    // Metode til at opdatere release-datoen på en film baseret på titlen
+    public void updateMovieReleaseDate(String title, String newReleaseDate) {
+        if (title == null || newReleaseDate == null) {
+            throw new IllegalArgumentException("Title and new release date cannot be null");
+        }
+
+        try (EntityManager em = emf.createEntityManager()) {
+            em.getTransaction().begin();
+
+            // Find filmen baseret på titlen
+            TypedQuery<Movie> query = em.createQuery("SELECT m FROM Movie m WHERE m.title = :title", Movie.class);
+            query.setParameter("title", title);
+            Movie movie = query.getResultStream().findFirst().orElse(null);
+
+            if (movie != null) {
+                // Opdater filmens release-date
+                movie.setReleaseDate(newReleaseDate);
+
+                // Gem opdateringen i databasen
+                em.merge(movie);
+
+                em.getTransaction().commit();
+
+                System.out.println("Filmen " + movie.getTitle() + " er opdateret med ny release-date: " + newReleaseDate);
+            } else {
+                System.out.println("Ingen film fundet med titlen: " + title);
+                em.getTransaction().rollback();
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+            throw new JpaException("Der er opstået en fejl ved opdatering af filmens release-date: " + title, e);
+        }
+    }
+
+    public void createNewMovie(Movie movie) {
+        if (movie == null) {
+            throw new IllegalArgumentException("Movie cannot be null");
+        }
+
+        try (EntityManager em = emf.createEntityManager()) {
+            em.getTransaction().begin();
+
+            // Håndter director
+            Director director = movie.getDirector();
+            if (director != null) {
+                TypedQuery<Director> query = em.createQuery(
+                        "SELECT d FROM Director d WHERE d.name = :name", Director.class);
+                query.setParameter("name", director.getName());
+
+                try {
+                    Director existingDirector = query.getSingleResult();
+                    movie.setDirector(existingDirector);
+                } catch (NoResultException e) {
+                    director = em.merge(director);
+                    movie.setDirector(director);
+                }
+            }
+
+            // Håndter genres
+            if (movie.getGenres() != null) {
+                Set<Genre> mergedGenres = new HashSet<>();
+                for (Genre genre : movie.getGenres()) {
+                    TypedQuery<Genre> query = em.createQuery(
+                            "SELECT g FROM Genre g WHERE g.genreId = :genreId", Genre.class);
+                    query.setParameter("genreId", genre.getGenreId());
+
+                    try {
+                        Genre existingGenre = query.getSingleResult();
+                        mergedGenres.add(existingGenre);
+                    } catch (NoResultException e) {
+                        Genre mergedGenre = em.merge(genre);
+                        mergedGenres.add(mergedGenre);
+                    }
+                }
+                movie.setGenres(mergedGenres);
+            }
+
+            // Håndter actors
+            if (movie.getActors() != null) {
+                Set<Actor> mergedActors = new HashSet<>();
+                for (Actor actor : movie.getActors()) {
+                    Actor mergedActor = em.merge(actor);
+                    mergedActors.add(mergedActor);
+                }
+                movie.setActors(mergedActors);
+            }
+
+            // Gem filmen
+            em.persist(movie);
+
+            em.getTransaction().commit();
+        } catch (Exception e) {
+            if (em.getTransaction().isActive()) {
+                em.getTransaction().rollback();
+            }
+            e.printStackTrace();
+            throw new JpaException("Der er opstået en fejl ved opretning af filmen: " + movie.getTitle(), e);
+        }
+    }
+
+
 
     public void create(Movie movie) {
         if (movie == null) {
@@ -178,7 +428,7 @@ public class MovieDAO {
                 em.getTransaction().rollback();
             }
             e.printStackTrace();
-            throw new JpaException("An error occurred while creating the movie", e);
+            throw new JpaException("Der er opstået en fejl ved opretning af filmen: "+movie.getTitle(), e);
         }
     }
 
@@ -275,12 +525,6 @@ public class MovieDAO {
         }
     }
 
-    public long countMovies() {
-        try (EntityManager em = emf.createEntityManager()) {
-            return em.createQuery("SELECT COUNT(m) FROM Movie m", Long.class).getSingleResult();
-        }
-    }
-
     public List<Movie> getMoviesByGenre(String genreName) {
         String jpql = "SELECT m FROM Movie m JOIN m.genres g WHERE g.name = :genreName";
         TypedQuery<Movie> query = em.createQuery(jpql, Movie.class);
@@ -296,14 +540,12 @@ public class MovieDAO {
     }
 
     public List<Movie> getMoviesByReleaseYear(int year) {
-        // Opret strenge for start- og slutdatoer
         String startOfYear = year + "-01-01";
         String endOfYear = year + "-12-31";
 
-        // Juster endOfYear til midnat den 31. december
+        // Justerer her endOfYear til midnat den 31. december
         endOfYear = endOfYear + " 23:59:59";
 
-        // HQL forespørgsel
         String jpql = "SELECT m FROM Movie m WHERE m.releaseDate BETWEEN :startOfYear AND :endOfYear";
         TypedQuery<Movie> query = em.createQuery(jpql, Movie.class);
         query.setParameter("startOfYear", startOfYear);
