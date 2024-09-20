@@ -9,7 +9,6 @@ import app.persistence.exceptions.JpaException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.Getter;
-
 import java.io.IOException;
 import java.net.URI;
 import java.net.http.HttpClient;
@@ -23,10 +22,8 @@ public class FilmFetcher {
     private static final Logger LOGGER = Logger.getLogger(FilmFetcher.class.getName());
     private static final String API_KEY = System.getenv("API_KEY");
     private static final String BASE_API_URL = "https://api.themoviedb.org/3/discover/movie?api_key=" + API_KEY + "&language=da-DK&sort_by=popularity.desc&with_original_language=da&page=";
-
     private final HttpClient client = HttpClient.newHttpClient();
     private final ObjectMapper objectMapper = new ObjectMapper();
-
     @Getter
     private List<MovieDTO> movieList = new ArrayList<>();
     @Getter
@@ -229,12 +226,10 @@ public class FilmFetcher {
         }
     }
 
-    // Hent genre-navne baseret på genre-IDs
+    // Henter her genre-navne baseret på genre-IDs
     public List<String> getGenreNames(Set<Integer> genreIds) {
         return genreIds.stream()
                 .map(genreId -> genreMap.getOrDefault(genreId, "Unknown Genre"))
                 .collect(Collectors.toList());
     }
-
-
 }

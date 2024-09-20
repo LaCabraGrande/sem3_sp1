@@ -1,6 +1,8 @@
 package app.persistence.daos;
 
 import app.persistence.config.HibernateConfig;
+import app.persistence.dtos.ActorDTO;
+import app.persistence.dtos.DirectorDTO;
 import app.persistence.entities.Actor;
 import app.persistence.entities.Director;
 import app.persistence.entities.Genre;
@@ -125,8 +127,70 @@ class MovieDAOTest {
     }
 
     @Test
+    void testDeleteMovie() {
+        Movie movie = createTestMovie("Jurassic Park");
+        movieDAO.delete(movie);
+        Movie deletedMovie = movieDAO.findByTitle("Jurassic Park");
+        assertNull(deletedMovie);
+    }
+
+    @Test
+    void testCreateDirectorDTO() {
+        DirectorDTO directorDTO = DirectorDTO.builder()
+                .name("Steven Spielberg")
+                .build();
+        movieDAO.create(directorDTO);
+        assertNotNull(directorDTO.getName());
+        assertEquals("Steven Spielberg", directorDTO.getName());
+    }
+
+    @Test
+    void testCreateActorDTO() {
+        ActorDTO actorDTO = ActorDTO.builder()
+                .name("Harrison Ford")
+                .build();
+        movieDAO.create(actorDTO);
+        assertNotNull(actorDTO.getName());
+        assertEquals("Harrison Ford", actorDTO.getName());
+    }
+
+    @Test
+    void testCreateGenreDTO() {
+        Genre genre = Genre.builder()
+                .genreId(1)
+                .name("Action")
+                .build();
+        movieDAO.create(genre);
+        assertNotNull(genre.getName());
+        assertEquals("Action", genre.getName());
+    }
+
+    @Test
+    void testFindByTitle() {
+        createTestMovie("Retfærdighedens ryttere");
+        Movie foundMovie = movieDAO.findByTitle("Retfærdighedens ryttere");
+        assertNotNull(foundMovie);
+        assertEquals("Retfærdighedens ryttere", foundMovie.getTitle());
+    }
+
+    @Test
+    void testFindByImdbId() {
+        createTestMovie("Aliens", "Science Fiction", 111161L);
+        Movie foundMovie = movieDAO.findByImdbId(111161L);
+        assertNotNull(foundMovie);
+        assertEquals("Aliens", foundMovie.getTitle());
+    }
+
+    @Test
+    void testSearchMoviesByTitle() {
+        createTestMovie("Retfærdighedens ryttere");
+        List<Movie> movies = movieDAO.searchMoviesByTitle("Retfærdighedens ryttere");
+        assertEquals(1, movies.size());
+        assertEquals("Retfærdighedens ryttere", movies.get(0).getTitle());
+    }
+
+    @Test
     void testGetAllMovies() {
-        // Opbygger genrer
         Genre genreDrama = Genre.builder()
                 .genreId(1)
                 .name("Drama")
@@ -137,7 +201,6 @@ class MovieDAOTest {
                 .name("Komedie")
                 .build();
 
-        // Opbygger film
         Movie movie1 = Movie.builder()
                 .title("Jagten")
                 .overview("En lærer bliver fejlagtigt anklaget for pædofili, og hans liv bliver vendt op og ned.")
@@ -170,15 +233,12 @@ class MovieDAOTest {
                 .genres(Set.of(genreComedy))
                 .build();
 
-        // Gemmer filmene i testdatabasen
         try (EntityManager em = emf.createEntityManager()) {
             em.getTransaction().begin();
 
-            // Gemmer genrer
             em.persist(genreDrama);
             em.persist(genreComedy);
 
-            // Gemmer film
             em.persist(movie1);
             em.persist(movie2);
 

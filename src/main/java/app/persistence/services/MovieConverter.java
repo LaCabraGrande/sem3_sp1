@@ -11,7 +11,7 @@ import app.persistence.entities.Genre;
 public class MovieConverter {
 
     // Metode til at konvertere en Movie til en MovieDTO
-    public static MovieAPI convertToDTO(Movie movie) {
+    public static MovieAPI convertToMovieAPI(Movie movie) {
         return MovieAPI.builder()
 
                 .id(movie.getId())

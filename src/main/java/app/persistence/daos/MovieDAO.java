@@ -20,12 +20,13 @@ public class MovieDAO {
 
     private static MovieDAO instance;
     private static EntityManagerFactory emf;
-    private EntityManager em;
+    private final EntityManager em;
 
     private MovieDAO() {
         em = emf.createEntityManager();
     }
 
+    // Singleton-metode til at hente en instans af MovieDAO
     public static MovieDAO getInstance(HibernateConfigState state) {
         if (instance == null) {
             emf = HibernateConfig.getEntityManagerFactoryConfig(state, "movie");
@@ -34,18 +35,21 @@ public class MovieDAO {
         return instance;
     }
 
+    // Her lukker jeg EntityManagerFactory
     public static void close() {
         if (emf != null && emf.isOpen()) {
             emf.close();
         }
     }
 
+    // Metode til at finde en film baseret på id
     public Movie findById(Long id) {
         try (EntityManager em = emf.createEntityManager()) {
             return em.find(Movie.class, id);
         }
     }
 
+    // Metode til at finde en film baseret på titlen
     public Movie findByTitle(String title) {
         try (EntityManager em = emf.createEntityManager()) {
             TypedQuery<Movie> query = em.createQuery(
@@ -58,7 +62,7 @@ public class MovieDAO {
         }
     }
 
-
+    //Metode som konverterer en Movie til en MovieDTO. Bruger ikke metoden i dette projekt
     private MovieDTO convertToDTO(Movie movie) {
         return MovieDTO.builder()
                 .databaseId(movie.getId())
@@ -80,12 +84,14 @@ public class MovieDAO {
                 .build();
     }
 
+    // Hjælpemetode til at hente genreIds fra en film
     private Set<Integer> getGenreIds(Movie movie) {
         return movie.getGenres().stream()
                 .map(Genre::getGenreId)
                 .collect(Collectors.toSet());
     }
 
+    // Konverterer en Set af Actor-objekter til en Set af ActorDTO-objekter
     private Set<ActorDTO> convertActorsToDTO(Set<Actor> actors) {
         return actors.stream()
                 .map(actor -> ActorDTO.builder()
@@ -97,6 +103,7 @@ public class MovieDAO {
                 .collect(Collectors.toSet());
     }
 
+    // Konverterer et Director-objekt til en DirectorDTO
     private DirectorDTO convertDirectorToDTO(Director director) {
         if (director != null) {
             return DirectorDTO.builder()
@@ -122,25 +129,20 @@ public class MovieDAO {
             }
         }
     }
+
+    // Metode til at tælle alle film i databasen
     public long countMovies() {
         try (EntityManager em = emf.createEntityManager()) {
-            // Start transaktionen
             em.getTransaction().begin();
-
-            // Forespørgsel til at tælle antallet af film
             TypedQuery<Long> query = em.createQuery("SELECT COUNT(m) FROM Movie m", Long.class);
             long count = query.getSingleResult();
-
-            // Commit transaktionen
             em.getTransaction().commit();
-
             return count;
         } catch (Exception e) {
             e.printStackTrace();
             throw new JpaException("Der er opstået en fejl ved optælling af filmene i databasen.", e);
         }
     }
-
 
     // Metode til at opdatere release-date for en film baseret på titlen
     public void updateReleaseDateByTitle(String title, String newReleaseDate) {
@@ -159,13 +161,13 @@ public class MovieDAO {
                     // Gem opdateringen i databasen
                     em.merge(movie);
                     transaction.commit();
-                    System.out.println("Filmen " + movie.getTitle() + " er opdateret med ny release-date: " + newReleaseDate);
+                    System.out.println("Filmen " + movie.getTitle() + " er opdateret med ny release-dato: " + newReleaseDate);
                 }
             } catch (Exception e) {
                 if (transaction.isActive()) {
                     transaction.rollback();
                 }
-                throw new JpaException("Fejl ved opdatering af release-date for filmen "+title, e);
+                throw new JpaException("Fejl ved opdatering af release-dato for filmen "+title, e);
             }
         }
     }
@@ -207,7 +209,6 @@ public class MovieDAO {
             }
         }
     }
-
 
     // Metode til at søge efter film baseret på en del af titlen (case-insensitive)
     public List<Movie> searchMoviesByTitle(String searchString) {
@@ -267,7 +268,7 @@ public class MovieDAO {
                 if (transaction.isActive()) {
                     transaction.rollback();
                 }
-                throw new JpaException("An error occurred while updating movie", e);
+                throw new JpaException("Der er opstået en fejl ved opdatering af filmen: " + movie.getTitle(), e);
             }
         }
     }
@@ -275,34 +276,29 @@ public class MovieDAO {
     // Metode til at opdatere release-datoen på en film baseret på titlen
     public void updateMovieReleaseDate(String title, String newReleaseDate) {
         if (title == null || newReleaseDate == null) {
-            throw new IllegalArgumentException("Title and new release date cannot be null");
+            throw new IllegalArgumentException("Titel og ny release-dato må ikke være null");
         }
 
         try (EntityManager em = emf.createEntityManager()) {
             em.getTransaction().begin();
 
-            // Find filmen baseret på titlen
             TypedQuery<Movie> query = em.createQuery("SELECT m FROM Movie m WHERE m.title = :title", Movie.class);
             query.setParameter("title", title);
             Movie movie = query.getResultStream().findFirst().orElse(null);
 
             if (movie != null) {
-                // Opdater filmens release-date
                 movie.setReleaseDate(newReleaseDate);
-
-                // Gem opdateringen i databasen
                 em.merge(movie);
-
                 em.getTransaction().commit();
 
-                System.out.println("Filmen " + movie.getTitle() + " er opdateret med ny release-date: " + newReleaseDate);
+                System.out.println("Filmen " + movie.getTitle() + " er opdateret med ny release-dato: " + newReleaseDate);
             } else {
                 System.out.println("Ingen film fundet med titlen: " + title);
                 em.getTransaction().rollback();
             }
         } catch (Exception e) {
             e.printStackTrace();
-            throw new JpaException("Der er opstået en fejl ved opdatering af filmens release-date: " + title, e);
+            throw new JpaException("Der er opstået en fejl ved opdatering af filmens release-dato: " + title, e);
         }
     }
 
@@ -314,7 +310,6 @@ public class MovieDAO {
         try (EntityManager em = emf.createEntityManager()) {
             em.getTransaction().begin();
 
-            // Håndter director
             Director director = movie.getDirector();
             if (director != null) {
                 TypedQuery<Director> query = em.createQuery(
@@ -330,7 +325,6 @@ public class MovieDAO {
                 }
             }
 
-            // Håndter genres
             if (movie.getGenres() != null) {
                 Set<Genre> mergedGenres = new HashSet<>();
                 for (Genre genre : movie.getGenres()) {
@@ -349,7 +343,6 @@ public class MovieDAO {
                 movie.setGenres(mergedGenres);
             }
 
-            // Håndter actors
             if (movie.getActors() != null) {
                 Set<Actor> mergedActors = new HashSet<>();
                 for (Actor actor : movie.getActors()) {
@@ -358,10 +351,7 @@ public class MovieDAO {
                 }
                 movie.setActors(mergedActors);
             }
-
-            // Gem filmen
             em.persist(movie);
-
             em.getTransaction().commit();
         } catch (Exception e) {
             if (em.getTransaction().isActive()) {
@@ -372,8 +362,6 @@ public class MovieDAO {
         }
     }
 
-
-
     public void create(Movie movie) {
         if (movie == null) {
             throw new IllegalArgumentException("Movie cannot be null");
@@ -382,7 +370,7 @@ public class MovieDAO {
         try (EntityManager em = emf.createEntityManager()) {
             em.getTransaction().begin();
 
-            // Håndter director - tjek om instruktøren allerede findes i databasen
+            // Her tjekker jeg om instruktøren allerede findes i databasen
             Director director = movie.getDirector();
             if (director != null) {
                 TypedQuery<Director> query = em.createQuery(
@@ -390,38 +378,35 @@ public class MovieDAO {
                 query.setParameter("name", director.getName());
 
                 try {
-                    Director existingDirector = query.getSingleResult();  // Hent eksisterende director
-                    movie.setDirector(existingDirector);  // Brug eksisterende director
+                    Director existingDirector = query.getSingleResult();
+                    movie.setDirector(existingDirector);
                 } catch (NoResultException e) {
-                    // Hvis ingen eksisterende director findes, opret en ny
                     director = em.merge(director);
-                    movie.setDirector(director);  // Sæt den nye director på filmen
+                    movie.setDirector(director);
                 }
             }
 
-            // Håndter genres - merge for at sikre, at eksisterende genres opdateres eller oprettes
+            // Her merger jeg for at sikre, at eksisterende genrer opdateres eller oprettes
             if (movie.getGenres() != null) {
                 Set<Genre> mergedGenres = new HashSet<>();
                 for (Genre genre : movie.getGenres()) {
-                    Genre mergedGenre = em.merge(genre);  // Merge genres
+                    Genre mergedGenre = em.merge(genre);
                     mergedGenres.add(mergedGenre);
                 }
-                movie.setGenres(mergedGenres); // Sæt de merge-destinationsgenrer på filmen
+                movie.setGenres(mergedGenres);
             }
 
-            // Håndter actors - merge for at sikre, at eksisterende actors opdateres eller oprettes
+            // Her merger jeg for at sikre, at eksisterende actors opdateres eller oprettes
             if (movie.getActors() != null) {
                 Set<Actor> mergedActors = new HashSet<>();
                 for (Actor actor : movie.getActors()) {
                     Actor mergedActor = em.merge(actor);  // Merge actors
                     mergedActors.add(mergedActor);
                 }
-                movie.setActors(mergedActors); // Sæt de merge-destinationsaktører på filmen
+                movie.setActors(mergedActors);
             }
 
-            // Her gemmer vi filmen med dens opdaterede eller nye relationer
             em.persist(movie);
-
             em.getTransaction().commit();
         } catch (Exception e) {
             if (em.getTransaction().isActive()) {
@@ -459,7 +444,7 @@ public class MovieDAO {
                 if (transaction.isActive()) {
                     transaction.rollback();
                 }
-                throw new JpaException("An error occurred while creating or updating genre", e);
+                throw new JpaException("Der er opstået en fejl ved oprettelse af genren: "+dto.getName(), e);
             }
         }
     }
@@ -475,7 +460,7 @@ public class MovieDAO {
                 if (transaction.isActive()) {
                     transaction.rollback();
                 }
-                throw new JpaException("An error occurred while creating genre", e);
+                throw new JpaException("Der er opstået en fejl ved oprettelse af genren: "+genre.getName(), e);
             }
         }
     }
@@ -494,7 +479,7 @@ public class MovieDAO {
                 if (transaction.isActive()) {
                     transaction.rollback();
                 }
-                throw new JpaException("An error occurred while creating actor", e);
+                throw new JpaException("Der er opstået en fejl ved oprettelse af skuespilleren: "+dto.getName(), e);
             }
         }
     }
@@ -513,7 +498,7 @@ public class MovieDAO {
                 if (transaction.isActive()) {
                     transaction.rollback();
                 }
-                throw new JpaException("An error occurred while creating director", e);
+                throw new JpaException("Der er opstået en fejl ved oprettelse af instruktøren: "+dto.getName(), e);
             }
         }
     }
@@ -525,17 +510,68 @@ public class MovieDAO {
         }
     }
 
+    public List<Movie> getMovies(int page, int size) {
+        if (page < 0 || size <= 0) {
+            throw new IllegalArgumentException("Page must be >= 0 and size must be > 0");
+        }
+
+        try (EntityManager em = emf.createEntityManager()) {
+            TypedQuery<Movie> query = em.createQuery("SELECT m FROM Movie m", Movie.class);
+            query.setFirstResult(page * size);
+            query.setMaxResults(size);
+            return query.getResultList();
+        } catch (Exception e) {
+            // Log fejlen eller håndter den efter behov
+            throw new RuntimeException("Fejl under hentning af film: " + e.getMessage(), e);
+        }
+    }
+
+
+
+
     public List<Movie> getMoviesByGenre(String genreName) {
-        String jpql = "SELECT m FROM Movie m JOIN m.genres g WHERE g.name = :genreName";
-        TypedQuery<Movie> query = em.createQuery(jpql, Movie.class);
-        query.setParameter("genreName", genreName);
-        return query.getResultList();
+        try {
+            String jpql = "SELECT m FROM Movie m JOIN m.genres g WHERE g.name = :genreName";
+            TypedQuery<Movie> query = em.createQuery(jpql, Movie.class);
+            query.setParameter("genreName", genreName);
+            return query.getResultList();
+        } catch (Exception e) {
+            throw new JpaException("Der er opstået en fejl ved hentning af film for genre: " + genreName, e);
+        }
+    }
+
+    public List<Movie> getMoviesByGenreForAPIServer(String genreName, int page, int size) {
+        if (page < 0 || size <= 0) {
+            throw new IllegalArgumentException("Page must be >= 0 and size must be > 0");
+        }
+        try {
+            String jpql = "SELECT m FROM Movie m JOIN m.genres g WHERE g.name = :genreName";
+            TypedQuery<Movie> query = em.createQuery(jpql, Movie.class);
+            query.setParameter("genreName", genreName);
+            query.setFirstResult(page * size);
+            query.setMaxResults(size);
+            return query.getResultList();
+        } catch (Exception e) {
+            throw new JpaException("Der er opstået en fejl ved hentning af film for genre: " + genreName, e);
+        }
     }
 
     public List<Movie> getMoviesByRating(double rating) {
         String jpql = "SELECT m FROM Movie m WHERE m.voteAverage >= :rating";
         TypedQuery<Movie> query = em.createQuery(jpql, Movie.class);
         query.setParameter("rating", rating);
+        return query.getResultList();
+    }
+
+    public List<Movie> getMoviesByRatingForAPIServer(double rating, int page, int size) {
+        if (page < 0 || size <= 0) {
+            throw new IllegalArgumentException("Page must be >= 0 and size must be > 0");
+        }
+        String jpql = "SELECT m FROM Movie m WHERE m.voteAverage >= :rating";
+        TypedQuery<Movie> query = em.createQuery(jpql, Movie.class);
+        query.setParameter("rating", rating);
+        query.setFirstResult(page * size);
+        query.setMaxResults(size);
         return query.getResultList();
     }
 
@@ -553,58 +589,83 @@ public class MovieDAO {
         return query.getResultList();
     }
 
-        public List<Actor> getActorsByMovieTitle(String title) {
-        String jpql = "SELECT a FROM Actor a JOIN a.movies m WHERE m.title = :title";
-        TypedQuery<Actor> query = em.createQuery(jpql, Actor.class);
-        query.setParameter("title", title);
+    public List<Movie> getMoviesByReleaseYearForAPIServer(int year, int page, int size) {
+        if (page < 0 || size <= 0) {
+            throw new IllegalArgumentException("Page must be >= 0 and size must be > 0");
+        }
+        String startOfYear = year + "-01-01";
+        String endOfYear = year + "-12-31";
+
+        // Justerer her endOfYear til midnat den 31. december
+        endOfYear = endOfYear + " 23:59:59";
+
+        String jpql = "SELECT m FROM Movie m WHERE m.releaseDate BETWEEN :startOfYear AND :endOfYear";
+        TypedQuery<Movie> query = em.createQuery(jpql, Movie.class);
+        query.setParameter("startOfYear", startOfYear);
+        query.setParameter("endOfYear", endOfYear);
+        query.setFirstResult(page * size);
+        query.setMaxResults(size);
         return query.getResultList();
     }
 
-    public Director getDirectorByMovieTitle(String title) {
-        String jpql = "SELECT m.director FROM Movie m WHERE m.title = :title";
-        TypedQuery<Director> query = em.createQuery(jpql, Director.class);
-        query.setParameter("title", title);
-        return query.getResultStream().findFirst().orElse(null);
-    }
-
-    public List<Movie> findMoviesByActor(String actorName) {
-        EntityManager em = emf.createEntityManager();
-        List<Movie> movies;
-
-        try {
-            TypedQuery<Movie> query = em.createQuery(
-                    "SELECT m FROM Movie m JOIN m.actors a WHERE a.name = :actorName", Movie.class);
-            query.setParameter("actorName", actorName);
-
-            movies = query.getResultList();
-        } catch (Exception e) {
-            e.printStackTrace();
-            throw new JpaException("An error occurred while fetching movies for the actor: " + actorName, e);
-        } finally {
-            em.close();
-        }
-        return movies;
-    }
-
-    // Her henter jeg alle film med en bestemt instruktør
     public List<Movie> getMoviesByDirector(String directorName) {
         EntityManager em = emf.createEntityManager();
         List<Movie> movies;
         try {
             TypedQuery<Movie> query = em.createQuery("SELECT m FROM Movie m WHERE m.director.name = :directorName", Movie.class);
-                    query.setParameter("directorName", directorName);
+            query.setParameter("directorName", directorName);
             movies = query.getResultList();
         } catch (Exception e) {
             e.printStackTrace();
-            throw new JpaException("An error occurred while fetching movies for the director: " + directorName, e);
+            throw new JpaException("Der opstod en fejl da jeg prøvede at hente film instrueret af: " + directorName, e);
         } finally {
             em.close();
         }
         return movies;
     }
 
+    public void delete(Movie movie) {
+        try (EntityManager em = emf.createEntityManager()) {
+            EntityTransaction transaction = em.getTransaction();
+            try {
+                transaction.begin();
+                Movie managedMovie = em.find(Movie.class, movie.getId());
+                em.remove(managedMovie);
+                transaction.commit();
+            } catch (Exception e) {
+                if (transaction.isActive()) {
+                    transaction.rollback();
+                }
+                throw new JpaException("Der er opstået en fejl ved sletning af filmen: " + movie.getTitle(), e);
+            }
+        }
+    }
 
+    public Movie findByImdbId(Long imdbId) {
+        Movie movie = null;
+        try (EntityManager em = emf.createEntityManager()) {
+            TypedQuery<Movie> query = em.createQuery("SELECT m FROM Movie m WHERE m.imdbId = :imdbId", Movie.class);
+            query.setParameter("imdbId", imdbId);
+            movie = query.getSingleResult();
+            System.out.println(movie);
+        } catch (NoResultException e) {
+            System.out.println("Ingen film fundet med imdbId: " + imdbId);
+        }
+        return movie;
+    }
 
+    public List<Movie> getMoviesByActor(String actorName) {
 
-
+        List<Movie> movies;
+        try(EntityManager em = emf.createEntityManager()) {
+            TypedQuery<Movie> query = em.createQuery(
+                    "SELECT m FROM Movie m JOIN m.actors a WHERE a.name = :actorName", Movie.class);
+            query.setParameter("actorName", actorName);
+            movies = query.getResultList();
+        } catch (Exception e) {
+            e.printStackTrace();
+            throw new JpaException("Fejl ved hentning af film for skuespiller: " + actorName, e);
+        }
+        return movies;
+    }
 }

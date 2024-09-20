@@ -10,7 +10,9 @@ import app.persistence.entities.Genre;
 import app.persistence.entities.Movie;
 import app.persistence.enums.HibernateConfigState;
 import app.persistence.fetcher.FilmFetcher;
-import java.text.DecimalFormat;
+import app.persistence.services.FilmService;
+import jakarta.persistence.EntityManagerFactory;
+import app.persistence.config.HibernateConfig;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -19,14 +21,19 @@ import java.util.stream.Collectors;
 
 public class Main {
     static final int LINE_WIDTH = 160;
+    static EntityManagerFactory emf = HibernateConfig.getEntityManagerFactoryConfig(HibernateConfigState.NORMAL, "movie");
+    private static final String RED = "\u001B[31m";
+    private static final String WHITE = "\u001B[39m";
+    private static final String RESET = "\u001B[0m";
 
     public static void main(String[] args) {
-        // Opretter DAO-objekter og FilmFetcher til brug i FilmService
+        // Her opretter jeg instanser af mine klasser
         MovieDAO movieDAO = MovieDAO.getInstance(HibernateConfigState.NORMAL);
         GenreDAO genreDAO = GenreDAO.getInstance(HibernateConfigState.NORMAL);
         ActorDAO actorDAO = ActorDAO.getInstance(HibernateConfigState.NORMAL);
         DirectorDAO directorDAO = DirectorDAO.getInstance(HibernateConfigState.NORMAL);
         FilmFetcher filmFetcher = new FilmFetcher(genreDAO);
+        FilmService filmService = new FilmService(filmFetcher, movieDAO, genreDAO, actorDAO, directorDAO, emf);
 
         // Her gemmer jeg alle genre i databasen
         //filmFetcher.populateGenres();
@@ -40,7 +47,14 @@ public class Main {
         // Her optæller jeg antallet af film i databasen
          System.out.println("Antal film i databasen: " + movieDAO.countMovies());
 
-        // Her sletter jeg en film film baseret på titlen
+        // Eksempel: Hent og print alle film
+        //List<Movie> allMovies = movieDAO.getAllMovies();
+        //System.out.println("\nAntal film i databasen:\n"+allMovies.size());
+        //for (Movie movie : allMovies) {
+        //    printMovieDetails(movie);
+        //}
+
+        // Her sletter jeg en film baseret på den angivne titel
         movieDAO.deleteByTitle("Festen");
 
         // Her opretter jeg 'Festen' igen med alle data og relaterede entiteter med Builder-metoden
@@ -84,46 +98,40 @@ public class Main {
         // Bekræftelse
         System.out.println("Filmen blev tilføjet: " + newMovie.getTitle());
 
-        // Eksempel: Hent og print alle film
-        //List<Movie> allMovies = movieDAO.getAllMovies();
-        //for (Movie movie : allMovies) {
-        //    printMovieDetails(movie);
-        //}
-
-        // Henter her film baseret på en genre
+        // Henter her film baseret på en angivet genre
         List<Movie> actionMovies = movieDAO.getMoviesByGenre("Drama");
         System.out.println("\nFilm med genren Drama tilknyttet:\n");
         for (Movie movie : actionMovies) {
             printMovieDetails(movie);
         }
 
-        // Henter her film baseret på rating
+        // Henter her film baseret på en angivet rating
         List<Movie> topRatedMovies = movieDAO.getMoviesByRating(8.0);
         System.out.println("\nFilm med en rating over 8.0:\n");
         for (Movie movie : topRatedMovies) {
             printMovieDetails(movie);
         }
 
-        // Hent her film baseret på udgivelsesår
+        // Jeg henter her film baseret på det angivne udgivelsesår
         List<Movie> movies2024 = movieDAO.getMoviesByReleaseYear(2020);
         System.out.println("\nFilm fra 2020:");
         for (Movie movie : movies2024) {
             printMovieDetails(movie);
         }
 
-        // Henter her alle skuespillere for en film
-        List<Actor> actors = movieDAO.getActorsByMovieTitle("Jagten");
+        // Jeg henter her alle skuespillere for en angivet filmtitel
+        List<Actor> actors = filmService.getActorsByMovieTitle("Jagten");
         System.out.println("\nSkuespillere som optræder i 'Jagten':\n");
         for (Actor actor : actors) {
             System.out.println("Actor: " + actor.getName());
         }
 
-        // Henter her instruktøren for en film
-        Director director = movieDAO.getDirectorByMovieTitle("Jagten");
-        System.out.println("\nInstruktør i 'Jagten':\n " + (director != null ? director.getName() : "Ukendt"));
+        // Henter her instruktøren for en angivet film
+        Director director = filmService.getDirectorByMovieTitle("Jagten");
+        System.out.println("\nInstruktøren af 'Jagten': " + (director != null ? director.getName() : "Ukendt"));
 
-        // Henter her alle film som en skuespiller optræder i
-        List<Movie> movies = movieDAO.findMoviesByActor("Anders W. Berthelsen");
+        // Henter her alle film som en angivet skuespiller optræder i
+        List<Movie> movies = filmService.findMoviesByActor("Anders W. Berthelsen");
         System.out.println("\nFilm som 'Anders W. Berthelsen' spiller med i:\n");
         for (Movie movie : movies) {
             System.out.println("- "+movie.getTitle());
@@ -132,11 +140,11 @@ public class Main {
         movieDAO.updateMovieReleaseDate("Jagten", "2024-01-01");
 
         // En metode til at søge efter film baseret på en del af titlen (case-insensitive)
-        List<Movie> moviesByTitle = movieDAO.searchMoviesByTitle("Under sandet");
-        System.out.println("\nFilm som indeholder 'Under sandet' i titlen:\n");
+        List<Movie> moviesByTitle = movieDAO.searchMoviesByTitle("Under");
+        System.out.println("\nFilm som indeholder 'Under' i titlen:\n");
         moviesByTitle.forEach(Main::printMovieDetails);
 
-        // Her udregner jeg den gennemsnitlige rating for alle film
+        // Her udregner jeg den gennemsnitlige rating for alle film i Databasen
         double averageRating = movieDAO.getTotalAverageRating();
         System.out.printf("\nGennemsnitlig rating for alle film i Databasen: %.1f%n", averageRating);
 
@@ -163,44 +171,42 @@ public class Main {
     }
 
     private static void printMovieDetails(Movie movie) {
-        System.out.println("Title: " + movie.getTitle());
-        System.out.println("Udgivelsesdato: " + movie.getReleaseDate());
-        System.out.println("Rating på IMDB: %.1f%n" + movie.getVoteAverage());
+        System.out.println(RED + "Title: " + WHITE + movie.getTitle() + RESET);
+        System.out.println(RED + "Udgivelsesdato: " + WHITE + movie.getReleaseDate() + RESET);
 
-        // Udskriver her genre-navne
-        System.out.print("Genrer: ");
+        System.out.printf(RED + "Rating på IMDB: " + WHITE + "%.1f%n" + RESET, movie.getVoteAverage());
+
+        System.out.print(RED + "Genrer: " + WHITE);
         Set<Genre> genres = movie.getGenres();
         if (genres != null && !genres.isEmpty()) {
             System.out.println(genres.stream()
                     .map(Genre::getName)
-                    .collect(Collectors.joining(", ")));
+                    .collect(Collectors.joining(", ")) + RESET);
         } else {
-            System.out.println("Ingen genrer tilknyttet");
+            System.out.println("Ingen genrer tilknyttet" + RESET);
         }
 
-        // Udskriver her navnet på  instruktøren
         if (movie.getDirector().getName() != null) {
-            System.out.println("Instruktør: " + movie.getDirector().getName());
+            System.out.println(RED + "Instruktør: " + WHITE + movie.getDirector().getName() + RESET);
         } else {
-            System.out.println("Instruktør: Ukendt");
+            System.out.println(RED + "Instruktør: " + WHITE + "Ukendt" + RESET);
         }
 
-        // Udskriver her navnet på skuespillerne
-        System.out.print("Skuespiller: ");
+        System.out.print(RED + "Skuespiller: " + WHITE);
         Set<Actor> actors = movie.getActors();
         if (actors != null && !actors.isEmpty()) {
             System.out.println(actors.stream()
                     .map(Actor::getName)
-                    .collect(Collectors.joining(", ")));
+                    .collect(Collectors.joining(", ")) + RESET);
         } else {
-            System.out.println("Ingen skuespillere tilknyttet");
+            System.out.println("Ingen skuespillere tilknyttet" + RESET);
         }
-        printWrappedText("Handling : " + movie.getOverview(), LINE_WIDTH);
+
+        printWrappedText(RED + "Handling : " + WHITE + movie.getOverview() + RESET, LINE_WIDTH);
         System.out.println("----------------------------------------------------------------------------------------------------------------------");
     }
 
-
-    // Metode til at udskrive tekst med linjeskift baseret på ønsket bredde
+    // Metode til at udskrive tekst med linjeskift baseret på ønsket bredde som jeg har sat til 160
     private static void printWrappedText(String text, int width) {
         if (text == null || text.length() < 12) {
             System.out.println("Handling: Ingen handling beskrevet");
@@ -209,7 +215,8 @@ public class Main {
 
         StringTokenizer tokenizer = new StringTokenizer(text, " ");
         StringBuilder line = new StringBuilder();
-
+        // Så længe der er flere ord i teksten så fortsætter vi med at bygge linjen
+        // og udskrive den når den er fyldt med maks bredde som jeg har sat til 160
         while (tokenizer.hasMoreTokens()) {
             String word = tokenizer.nextToken();
             if (line.length() + word.length() + 1 > width) {
@@ -221,7 +228,7 @@ public class Main {
             }
             line.append(word);
         }
-        // Print the last line if it has content
+        // Her udskriver jeg den sidste linje hvis der er noget tekst tilbage
         if (line.length() > 0) {
             System.out.println(line.toString());
         }

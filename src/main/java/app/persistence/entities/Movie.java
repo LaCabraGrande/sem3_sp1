@@ -1,10 +1,8 @@
 package app.persistence.entities;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonManagedReference;
 import jakarta.persistence.*;
 import lombok.*;
-
 import java.util.Objects;
 import java.util.Set;
 

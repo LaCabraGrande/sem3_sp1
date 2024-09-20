@@ -1,5 +1,7 @@
 package app.persistence.services;
 
+import app.persistence.apis.MovieAPI;
+import app.persistence.config.HibernateConfig;
 import app.persistence.entities.Actor;
 import app.persistence.entities.Director;
 import app.persistence.entities.Genre;
@@ -11,8 +13,14 @@ import app.persistence.daos.ActorDAO;
 import app.persistence.daos.DirectorDAO;
 import app.persistence.dtos.ActorDTO;
 import app.persistence.dtos.DirectorDTO;
+import app.persistence.enums.HibernateConfigState;
 import app.persistence.exceptions.JpaException;
 import app.persistence.fetcher.FilmFetcher;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.EntityManagerFactory;
+import jakarta.persistence.TypedQuery;
+
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -23,13 +31,16 @@ public class FilmService {
     private final GenreDAO genreDAO;
     private final ActorDAO actorDAO;
     private final DirectorDAO directorDAO;
+    private final ObjectMapper mapper = new ObjectMapper();
+    private final EntityManagerFactory emf;
 
-    public FilmService(FilmFetcher filmFetcher, MovieDAO movieDAO, GenreDAO genreDAO, ActorDAO actorDAO, DirectorDAO directorDAO) {
+    public FilmService(FilmFetcher filmFetcher, MovieDAO movieDAO, GenreDAO genreDAO, ActorDAO actorDAO, DirectorDAO directorDAO, EntityManagerFactory emf) {
         this.filmFetcher = filmFetcher;
         this.movieDAO = movieDAO;
         this.genreDAO = genreDAO;
         this.actorDAO = actorDAO;
         this.directorDAO = directorDAO;
+        this.emf = emf;
     }
 
     public void fetchAndSaveMovies() {
@@ -51,13 +62,11 @@ public class FilmService {
     }
 
     private void saveMovieWithDetails(MovieDTO movieDTO) {
-        // Her undersøger jeg om filmen allerede eksisterer i databasen
         Movie existingMovie = movieDAO.findByTitle(movieDTO.getTitle());
 
         if (existingMovie == null) {
             Set<Integer> genreIds = movieDTO.getGenreIds();
             List<String> genreNames = filmFetcher.getGenreNames(genreIds);
-
             movieDTO.setGenreNames(genreNames);
 
             DirectorDTO directorDTO = handleDirector(movieDTO);
@@ -66,9 +75,7 @@ public class FilmService {
             Set<ActorDTO> actorDTOs = handleActors(movieDTO);
             movieDTO.setActors(actorDTOs);
 
-            // Konverterer MovieDTO til Movie entity
             Movie movie = convertToEntity(movieDTO);
-
             movieDAO.create(movie);
         }
     }
@@ -93,19 +100,16 @@ public class FilmService {
 
         Set<Actor> actors = new HashSet<>();
         for (ActorDTO actorDTO : movieDTO.getActors()) {
-
-            // Opretter en ny Actor entity
             Actor newActor = new Actor();
             newActor.setId(actorDTO.getId());
             newActor.setName(actorDTO.getName());
-            newActor.setMovieIds(actorDTO.getMovieIds()); // Set movieIds
-            newActor.setMovieTitles(actorDTO.getMovieTitles()); // Set movieTitles
+            newActor.setMovieIds(actorDTO.getMovieIds());
+            newActor.setMovieTitles(actorDTO.getMovieTitles());
 
             actors.add(newActor);
         }
         movie.setActors(actors);
 
-        // Konverterer DirectorDTO til Director entity
         Director director = convertToDirectorEntity(movieDTO.getDirector());
         movie.setDirector(director);
 
@@ -113,7 +117,6 @@ public class FilmService {
     }
 
     private DirectorDTO handleDirector(MovieDTO movieDTO) {
-        // Undsøger her om der allerede er en instruktør sat
         if (movieDTO.getDirector() != null) {
             return movieDTO.getDirector();
         }
@@ -121,12 +124,9 @@ public class FilmService {
     }
 
     private Set<ActorDTO> handleActors(MovieDTO movieDTO) {
-        // Kontrollér om actors allerede er sat
         if (movieDTO.getActors() != null && !movieDTO.getActors().isEmpty()) {
             return movieDTO.getActors();
         }
-
-        // Hvis der ikke er skuespillere tilknyttet, returner jeg her et tomt sæt
         System.out.println("Ingen skuespillere fundet, returnerer et tomt sæt.");
         return new HashSet<>();
     }
@@ -137,4 +137,57 @@ public class FilmService {
         director.setName(directorDTO.getName());
         return director;
     }
+
+    public List<Actor> getActorsByMovieTitle(String title) {
+        EntityManager em = emf.createEntityManager();
+        List<Actor> actors;
+        try {
+            String jpql = "SELECT a FROM Actor a JOIN a.movies m WHERE m.title = :title";
+            TypedQuery<Actor> query = em.createQuery(jpql, Actor.class);
+            query.setParameter("title", title);
+            actors = query.getResultList();
+        } catch (Exception e) {
+            e.printStackTrace();
+            throw new JpaException("Fejl ved hentning af skuespillere for film med titel: " + title, e);
+        } finally {
+            em.close();
+        }
+        return actors;
+    }
+
+    public Director getDirectorByMovieTitle(String title) {
+        EntityManager em = emf.createEntityManager();
+        Director director;
+        try {
+            String jpql = "SELECT m.director FROM Movie m WHERE m.title = :title";
+            TypedQuery<Director> query = em.createQuery(jpql, Director.class);
+            query.setParameter("title", title);
+            director = query.getResultStream().findFirst().orElse(null);
+        } catch (Exception e) {
+            e.printStackTrace();
+            throw new JpaException("Fejl ved hentning af instruktør for film med titel: " + title, e);
+        } finally {
+            em.close();
+        }
+        return director;
+    }
+
+    public List<Movie> findMoviesByActor(String actorName) {
+        EntityManager em = emf.createEntityManager();
+        List<Movie> movies;
+        try {
+            TypedQuery<Movie> query = em.createQuery(
+                    "SELECT m FROM Movie m JOIN m.actors a WHERE a.name = :actorName", Movie.class);
+            query.setParameter("actorName", actorName);
+            movies = query.getResultList();
+        } catch (Exception e) {
+            e.printStackTrace();
+            throw new JpaException("Fejl ved hentning af film for skuespiller: " + actorName, e);
+        } finally {
+            em.close();
+        }
+        return movies;
+    }
+
+
 }
