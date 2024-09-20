@@ -33,16 +33,16 @@ public class Main {
         ActorDAO actorDAO = ActorDAO.getInstance(HibernateConfigState.NORMAL);
         DirectorDAO directorDAO = DirectorDAO.getInstance(HibernateConfigState.NORMAL);
         FilmFetcher filmFetcher = new FilmFetcher(genreDAO);
-        FilmService filmService = new FilmService(filmFetcher, movieDAO, genreDAO, actorDAO, directorDAO, emf);
+        //FilmService filmService = new FilmService(filmFetcher, movieDAO, genreDAO, actorDAO, directorDAO, emf);
 
         // Her gemmer jeg alle genre i databasen
-        //filmFetcher.populateGenres();
+        filmFetcher.populateGenres();
 
         // Opretter her en FilmService
-        //FilmService filmService = new FilmService(filmFetcher, movieDAO, genreDAO, actorDAO, directorDAO);
+        FilmService filmService = new FilmService(filmFetcher, movieDAO, genreDAO, actorDAO, directorDAO, emf);
 
         // Her henter jeg og gemmer filmene i databasen
-        //filmService.fetchAndSaveMovies();
+        filmService.fetchAndSaveMovies();
 
         // Her optæller jeg antallet af film i databasen
          System.out.println("Antal film i databasen: " + movieDAO.countMovies());
@@ -54,10 +54,19 @@ public class Main {
         //    printMovieDetails(movie);
         //}
 
+        // Jeg har valgt at rense lidt ud i databasen og slette film som ikke har nogen release-dato. Dette kunne jeg have gjort da jeg
+        // itererede gennem min MovieDTO liste FilmService men ville hellere gøre det her
+        int deletedMovies = movieDAO.deleteMoviesWithoutReleaseDate();
+        System.out.println("Slettede film uden udgivelsesdato: " + deletedMovies);
+
+        // jeg har også valgt at slette film som har en rating på over 8.6 da det som regel er film som er blevet rated forkert
+        int deletedMovies2 = movieDAO.deleteMoviesWithRatingOver(8.6);
+        System.out.println("Slettede film med en rating over 9.0: " + deletedMovies2);
+
         // Her sletter jeg en film baseret på den angivne titel
         movieDAO.deleteByTitle("Festen");
 
-        // Her opretter jeg 'Festen' igen med alle data og relaterede entiteter med Builder-metoden
+        // Opret 'Festen' med Builder-metoden
         Movie newMovie = Movie.builder()
                 .imdbId(1234567L)
                 .title("Festen")
@@ -74,36 +83,32 @@ public class Main {
                 .director(Director.builder()
                         .name("Thomas Vinterberg")
                         .build())
-                .genres(new HashSet<>(Set.of(
-                        Genre.builder()
-                                .genreId(18)
-                                .name("Drama")
-                                .build(),
-                        Genre.builder()
-                                .genreId(53)
-                                .name("Thriller")
-                                .build())))
-                .actors(new HashSet<>(Set.of(
-                        Actor.builder()
-                                .name("Ulrich Thomsen")
-                                .build(),
-                        Actor.builder()
-                                .name("Henning Moritzen")
-                                .build())))
+                .genres(new HashSet<>() {{
+                    add(Genre.builder().genreId(18).name("Drama").build());
+                    add(Genre.builder().genreId(53).name("Thriller").build());
+                }})
+                .actors(new HashSet<>() {{
+                    add(Actor.builder().name("Ulrich Thomsen").build());
+                    add(Actor.builder().name("Henning Moritzen").build());
+                }})
                 .build();
 
-        // Tilføj filmen til databasen
-        movieDAO.createNewMovie(newMovie);
+        try {
+            movieDAO.createNewMovie(newMovie);
+            // Bekræftelse
+            System.out.println("Filmen blev tilføjet: " + newMovie.getTitle());
+        } catch (Exception e) {
+            System.err.println("Der opstod en fejl under tilføjelsen af filmen: " + e.getMessage());
+        }
 
-        // Bekræftelse
-        System.out.println("Filmen blev tilføjet: " + newMovie.getTitle());
+
 
         // Henter her film baseret på en angivet genre
         List<Movie> actionMovies = movieDAO.getMoviesByGenre("Drama");
-        System.out.println("\nFilm med genren Drama tilknyttet:\n");
-        for (Movie movie : actionMovies) {
-            printMovieDetails(movie);
-        }
+//        System.out.println("\nFilm med genren Drama tilknyttet:\n");
+//        for (Movie movie : actionMovies) {
+//            printMovieDetails(movie);
+//        }
 
         // Henter her film baseret på en angivet rating
         List<Movie> topRatedMovies = movieDAO.getMoviesByRating(8.0);
@@ -139,6 +144,9 @@ public class Main {
         // En metode til at opdaterer release-datoen for en film
         movieDAO.updateMovieReleaseDate("Jagten", "2024-01-01");
 
+        // En metode til at opdaterer titlen for en film
+        movieDAO.updateMovieTitle("Jagten", "Jagten 2: The Hunt Continues");
+
         // En metode til at søge efter film baseret på en del af titlen (case-insensitive)
         List<Movie> moviesByTitle = movieDAO.searchMoviesByTitle("Under");
         System.out.println("\nFilm som indeholder 'Under' i titlen:\n");
@@ -152,21 +160,21 @@ public class Main {
         List<Movie> lowestRatedMovies = movieDAO.getTop10LowestRatedMovies();
         System.out.println("\nTop 10 laveste ratede film:\n");
         for (Movie movie : lowestRatedMovies) {
-            System.out.println(movie.getTitle() + " - Rating: " + movie.getVoteAverage());
+            System.out.println("- "+movie.getTitle() + " - Rating: " + movie.getVoteAverage());
         }
 
         // Få titlerne på de top-10 højeste ratede film
         List<Movie> highestRatedMovies = movieDAO.getTop10HighestRatedMovies();
         System.out.println("\nTop 10 højeste ratede film:\n");
         for (Movie movie : highestRatedMovies) {
-            System.out.println(movie.getTitle() + " - Rating: " + movie.getVoteAverage());
+            System.out.println("- "+movie.getTitle() + " - Rating: " + movie.getVoteAverage());
         }
 
         // Få titlerne på de top-10 mest populære film
         List<Movie> mostPopularMovies = movieDAO.getTop10MostPopularMovies();
         System.out.println("\nTop 10 mest populære film:\n");
         for (Movie movie : mostPopularMovies) {
-            System.out.println(movie.getTitle() + " - Popularitet: " + movie.getPopularity());
+            System.out.println("- "+movie.getTitle() + " - Popularitet: " + movie.getPopularity());
         }
     }
 
@@ -202,7 +210,13 @@ public class Main {
             System.out.println("Ingen skuespillere tilknyttet" + RESET);
         }
 
-        printWrappedText(RED + "Handling : " + WHITE + movie.getOverview() + RESET, LINE_WIDTH);
+        String overview = movie.getOverview();
+        if (overview == null || overview.length() < 11) {
+            printWrappedText(RED + "Handling : " + WHITE + "ingen handling angivet" + RESET, LINE_WIDTH);
+        } else {
+            printWrappedText(RED + "Handling : " + WHITE + overview + RESET, LINE_WIDTH);
+        }
+
         System.out.println("----------------------------------------------------------------------------------------------------------------------");
     }
 

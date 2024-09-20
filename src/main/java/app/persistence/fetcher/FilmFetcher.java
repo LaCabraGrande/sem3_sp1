@@ -15,6 +15,10 @@ import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.util.*;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
 
@@ -29,7 +33,7 @@ public class FilmFetcher {
     @Getter
     private Map<Integer, String> genreMap = new HashMap<>();
     private final GenreDAO genreDAO;
-
+    private final ExecutorService executorService = Executors.newFixedThreadPool(10); // Thread pool
     public FilmFetcher(GenreDAO genreDAO) {
         this.genreDAO = genreDAO;
         initializeGenreMap();
@@ -39,41 +43,69 @@ public class FilmFetcher {
         int page = 1;
         boolean hasMorePages = true;
 
+        List<Future<List<MovieDTO>>> futures = new ArrayList<>();
+
         while (hasMorePages) {
             String apiUrl = BASE_API_URL + page;
             LOGGER.info("Fetching URL: " + apiUrl);
-            String jsonResponse = fetchApiResponse(apiUrl);
-            LOGGER.info("API Response: " + jsonResponse);
 
-            JsonNode rootNode = objectMapper.readTree(jsonResponse);
-            JsonNode resultsNode = rootNode.path("results");
-            JsonNode totalPagesNode = rootNode.path("total_pages");
+            Future<List<MovieDTO>> future = executorService.submit(() -> {
+                String jsonResponse = fetchApiResponse(apiUrl);
+                JsonNode rootNode = objectMapper.readTree(jsonResponse);
+                JsonNode resultsNode = rootNode.path("results");
+                if (!resultsNode.isEmpty()) {
+                    return extractMovies(resultsNode);
+                }
+                return Collections.emptyList();
+            });
 
-            if (resultsNode.isEmpty()) {
-                LOGGER.info("Ikke flere resultater hentet.");
+            futures.add(future);
+
+            page++;
+            if (page > getTotalPages()) { // Antal af sider skal hentes én gang i starten
                 hasMorePages = false;
-            } else {
-                LOGGER.info("Antallet af resultater hentet: " + resultsNode.size());
-                extractMovies(resultsNode);
-
-                // Tilføj detaljer om skuespillere og instruktør til hver film
-                for (MovieDTO movie : movieList) {
-                    try {
-                        MovieDTO detailedMovie = fetchMovieWithDetails(movie.getImdbId());
-                        movie.setActors(detailedMovie.getActors());
-                        movie.setDirector(detailedMovie.getDirector());
-                    } catch (IOException | InterruptedException e) {
-                        LOGGER.warning("Kunne ikke hente detaljer for film-ID: " + movie.getImdbId() + ": " + e.getMessage());
-                    }
-                }
-                page++;
-                if (page > totalPagesNode.asInt()) {
-                    LOGGER.info("Nåede til den sidste side.");
-                    hasMorePages = false;
-                }
             }
         }
+
+        for (Future<List<MovieDTO>> future : futures) {
+            try {
+                movieList.addAll(future.get()); // Tilføj hentede film til movieList
+            } catch (ExecutionException e) {
+                LOGGER.severe("Fejl ved udførelse af filmhentning: " + e.getMessage());
+            }
+        }
+
+        // Hent detaljer om skuespillere og instruktør i parallelle tråde
+        List<Future<Void>> detailFutures = new ArrayList<>();
+        for (MovieDTO movie : movieList) {
+            detailFutures.add(executorService.submit(() -> {
+                try {
+                    MovieDTO detailedMovie = fetchMovieWithDetails(movie.getImdbId());
+                    movie.setActors(detailedMovie.getActors());
+                    movie.setDirector(detailedMovie.getDirector());
+                } catch (IOException | InterruptedException e) {
+                    LOGGER.warning("Kunne ikke hente detaljer for film-ID: " + movie.getImdbId() + ": " + e.getMessage());
+                }
+                return null;
+            }));
+        }
+
+        for (Future<Void> future : detailFutures) {
+            try {
+                future.get(); // Vent på at alle detaljer er hentet
+            } catch (ExecutionException e) {
+                LOGGER.severe("Fejl ved udførelse af filmhentning af detaljer: " + e.getMessage());
+            }
+        }
+        executorService.shutdown();
         return movieList;
+    }
+
+    private int getTotalPages() throws IOException, InterruptedException {
+        String firstPageUrl = BASE_API_URL + "1"; // Hent første side for at få det totale sideantal
+        String jsonResponse = fetchApiResponse(firstPageUrl);
+        JsonNode rootNode = objectMapper.readTree(jsonResponse);
+        return rootNode.path("total_pages").asInt();
     }
 
     // Hent detaljer om en film inklusive skuespillere og instruktør
@@ -147,34 +179,29 @@ public class FilmFetcher {
         movieDTO.setActors(actorDTOSet);
     }
 
-    private void extractMovies(JsonNode resultsNode) {
-        try {
-            for (JsonNode movieNode : resultsNode) {
-                String originalLanguage = movieNode.path("original_language").asText();
-
-                if ("da".equals(originalLanguage)) { // Filtrér danske film
-                    MovieDTO movieDTO = MovieDTO.builder()
-                            .imdbId(movieNode.path("id").asLong())
-                            .title(movieNode.path("title").asText())
-                            .overview(movieNode.path("overview").asText())
-                            .releaseDate(movieNode.path("release_date").asText())
-                            .posterPath(movieNode.path("poster_path").asText())
-                            .voteAverage(movieNode.path("vote_average").asDouble())
-                            .voteCount(movieNode.path("vote_count").asInt())
-                            .backdropPath(movieNode.path("backdrop_path").asText())
-                            .genreIds(parseGenreIds(movieNode.path("genre_ids")))
-                            .isAdult(movieNode.path("adult").asBoolean())
-                            .originalTitle(movieNode.path("original_title").asText())
-                            .popularity(movieNode.path("popularity").asDouble())
-                            .originalLanguage(originalLanguage)
-                            .build();
-                    movieList.add(movieDTO);
-                }
+    private List<MovieDTO> extractMovies(JsonNode resultsNode) {
+        List<MovieDTO> extractedMovies = new ArrayList<>();
+        for (JsonNode movieNode : resultsNode) {
+            if ("da".equals(movieNode.path("original_language").asText())) {
+                MovieDTO movieDTO = MovieDTO.builder()
+                        .imdbId(movieNode.path("id").asLong())
+                        .title(movieNode.path("title").asText())
+                        .overview(movieNode.path("overview").asText())
+                        .releaseDate(movieNode.path("release_date").asText())
+                        .posterPath(movieNode.path("poster_path").asText())
+                        .voteAverage(movieNode.path("vote_average").asDouble())
+                        .voteCount(movieNode.path("vote_count").asInt())
+                        .backdropPath(movieNode.path("backdrop_path").asText())
+                        .genreIds(parseGenreIds(movieNode.path("genre_ids")))
+                        .isAdult(movieNode.path("adult").asBoolean())
+                        .originalTitle(movieNode.path("original_title").asText())
+                        .popularity(movieNode.path("popularity").asDouble())
+                        .originalLanguage("da")
+                        .build();
+                extractedMovies.add(movieDTO);
             }
-        } catch (Exception e) {
-            LOGGER.severe("Fejl ved udtrækning af data fra JSON data" + e.getMessage());
-            throw new JpaException("Fejl ved udtrækning af data fra JSON data", e);
         }
+        return extractedMovies;
     }
 
     public Set<Integer> parseGenreIds(JsonNode genreIdsNode) {

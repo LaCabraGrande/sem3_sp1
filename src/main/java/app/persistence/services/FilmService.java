@@ -1,7 +1,5 @@
 package app.persistence.services;
 
-import app.persistence.apis.MovieAPI;
-import app.persistence.config.HibernateConfig;
 import app.persistence.entities.Actor;
 import app.persistence.entities.Director;
 import app.persistence.entities.Genre;
@@ -13,7 +11,6 @@ import app.persistence.daos.ActorDAO;
 import app.persistence.daos.DirectorDAO;
 import app.persistence.dtos.ActorDTO;
 import app.persistence.dtos.DirectorDTO;
-import app.persistence.enums.HibernateConfigState;
 import app.persistence.exceptions.JpaException;
 import app.persistence.fetcher.FilmFetcher;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -124,12 +121,45 @@ public class FilmService {
     }
 
     private Set<ActorDTO> handleActors(MovieDTO movieDTO) {
-        if (movieDTO.getActors() != null && !movieDTO.getActors().isEmpty()) {
-            return movieDTO.getActors();
+        Set<ActorDTO> actorsToReturn = new HashSet<>();
+
+        // Opret EntityManager
+        try (EntityManager em = emf.createEntityManager()) {
+            em.getTransaction().begin();  // Start en ny transaktion
+
+            // Kontrollér om skuespillerlisten i movieDTO ikke er tom
+            if (movieDTO.getActors() != null && !movieDTO.getActors().isEmpty()) {
+                for (ActorDTO actorDTO : movieDTO.getActors()) {
+                    // Forespørg for at se, om denne skuespiller allerede er tilknyttet filmen
+                    TypedQuery<Long> query = em.createQuery(
+                            "SELECT COUNT(a) FROM Movie m JOIN m.actors a WHERE m.id = :movieId AND a.id = :actorId", Long.class);
+                    query.setParameter("movieId", movieDTO.getDatabaseId());
+                    query.setParameter("actorId", actorDTO.getId());
+
+                    Long count = query.getSingleResult();
+
+                    if (count == 0) {
+                        // Hvis relationen ikke eksisterer, tilføj skuespilleren til sættet
+                        actorsToReturn.add(actorDTO);
+                    } else {
+                        // Log en advarsel eller håndter det faktum, at skuespilleren allerede er tilknyttet
+                        System.out.println("Actor " + actorDTO.getName() + " is already associated with the movie.");
+                    }
+                }
+            }
+
+            em.getTransaction().commit();  // Commit transaktionen
+        } catch (Exception e) {
+            // Håndter eventuelle fejl ved transaktionen
+            System.err.println("Fejl opstod ved behandling af skuespillere: " + e.getMessage());
+            e.printStackTrace();
         }
-        System.out.println("Ingen skuespillere fundet, returnerer et tomt sæt.");
-        return new HashSet<>();
+
+        return actorsToReturn;  // Returner sættet af nye skuespillere
     }
+
+
+
 
     private Director convertToDirectorEntity(DirectorDTO directorDTO) {
         Director director = new Director();

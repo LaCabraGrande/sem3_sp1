@@ -3,7 +3,6 @@ package app.persistence.daos;
 import app.persistence.dtos.ActorDTO;
 import app.persistence.dtos.DirectorDTO;
 import app.persistence.dtos.GenreDTO;
-import app.persistence.dtos.MovieDTO;
 import app.persistence.entities.Actor;
 import app.persistence.entities.Director;
 import app.persistence.entities.Genre;
@@ -12,9 +11,7 @@ import app.persistence.exceptions.JpaException;
 import jakarta.persistence.*;
 import app.persistence.config.HibernateConfig;
 import app.persistence.enums.HibernateConfigState;
-
 import java.util.*;
-import java.util.stream.Collectors;
 
 public class MovieDAO {
 
@@ -62,74 +59,6 @@ public class MovieDAO {
         }
     }
 
-    //Metode som konverterer en Movie til en MovieDTO. Bruger ikke metoden i dette projekt
-    private MovieDTO convertToDTO(Movie movie) {
-        return MovieDTO.builder()
-                .databaseId(movie.getId())
-                .imdbId(movie.getImdbId())
-                .title(movie.getTitle())
-                .overview(movie.getOverview())
-                .releaseDate(movie.getReleaseDate())
-                .isAdult(movie.isAdult())
-                .backdropPath(movie.getBackdropPath())
-                .posterPath(movie.getPosterPath())
-                .popularity(movie.getPopularity())
-                .originalLanguage(movie.getOriginalLanguage())
-                .originalTitle(movie.getOriginalTitle())
-                .voteAverage(movie.getVoteAverage())
-                .voteCount(movie.getVoteCount())
-                .genreIds(getGenreIds(movie))
-                .actors(convertActorsToDTO(movie.getActors()))
-                .director(convertDirectorToDTO(movie.getDirector()))
-                .build();
-    }
-
-    // Hjælpemetode til at hente genreIds fra en film
-    private Set<Integer> getGenreIds(Movie movie) {
-        return movie.getGenres().stream()
-                .map(Genre::getGenreId)
-                .collect(Collectors.toSet());
-    }
-
-    // Konverterer en Set af Actor-objekter til en Set af ActorDTO-objekter
-    private Set<ActorDTO> convertActorsToDTO(Set<Actor> actors) {
-        return actors.stream()
-                .map(actor -> ActorDTO.builder()
-                        .id(actor.getId())
-                        .name(actor.getName())
-                        .movieIds(new HashSet<>())
-                        .movieTitles(new HashSet<>())
-                        .build())
-                .collect(Collectors.toSet());
-    }
-
-    // Konverterer et Director-objekt til en DirectorDTO
-    private DirectorDTO convertDirectorToDTO(Director director) {
-        if (director != null) {
-            return DirectorDTO.builder()
-                    .id(director.getId())
-                    .name(director.getName())
-                    .build();
-        }
-        return null;
-    }
-
-    // Tilføjer en ny film til databasen
-    public void createMovie(Movie movie) {
-        try (EntityManager em = emf.createEntityManager()) {
-            try {
-                em.getTransaction().begin();
-                em.persist(movie);
-                em.getTransaction().commit();
-            } catch (Exception e) {
-                if (em.getTransaction().isActive()) {
-                    em.getTransaction().rollback();
-                }
-                e.printStackTrace();
-            }
-        }
-    }
-
     // Metode til at tælle alle film i databasen
     public long countMovies() {
         try (EntityManager em = emf.createEntityManager()) {
@@ -144,30 +73,27 @@ public class MovieDAO {
         }
     }
 
-    // Metode til at opdatere release-date for en film baseret på titlen
-    public void updateReleaseDateByTitle(String title, String newReleaseDate) {
+    // Metode til at opdatere titlen på en film med angivelse af den gamle titel og den nye titel
+    public void updateMovieTitle(String title, String newTitle) {
         try (EntityManager em = emf.createEntityManager()) {
             EntityTransaction transaction = em.getTransaction();
             try {
-                // Find filmen baseret på titlen
+                transaction.begin();
                 Movie movie = em.createQuery("SELECT m FROM Movie m WHERE m.title = :title", Movie.class)
                         .setParameter("title", title)
                         .getSingleResult();
 
                 if (movie != null) {
-                    transaction.begin();
-                    // Opdater filmens release-date
-                    movie.setReleaseDate(newReleaseDate);
-                    // Gem opdateringen i databasen
+                    movie.setTitle(newTitle);
                     em.merge(movie);
                     transaction.commit();
-                    System.out.println("Filmen " + movie.getTitle() + " er opdateret med ny release-dato: " + newReleaseDate);
+                    System.out.println("Filmen " + title + " er opdateret med en ny titel: " + newTitle);
                 }
             } catch (Exception e) {
                 if (transaction.isActive()) {
                     transaction.rollback();
                 }
-                throw new JpaException("Fejl ved opdatering af release-dato for filmen "+title, e);
+                throw new JpaException("Fejl ved opdatering af titel for filmen "+title, e);
             }
         }
     }
@@ -208,6 +134,74 @@ public class MovieDAO {
                 throw new JpaException("Fejl ved sletning af filmen " + title, e);
             }
         }
+    }
+
+    // Metode til at slette film der ikke har nogen release-dato tilknyttet
+    public int deleteMoviesWithoutReleaseDate() {
+        int deleted = 0;
+        try (EntityManager em = emf.createEntityManager()) {
+            EntityTransaction transaction = em.getTransaction();
+            try {
+                em.getTransaction().begin();
+                List<Movie> movies = em.createQuery(
+                                "SELECT m FROM Movie m WHERE m.releaseDate IS NULL OR LENGTH(m.releaseDate) < 6", Movie.class)
+                        .getResultList();
+
+
+                if (!movies.isEmpty()) {
+                    for(Movie movie : movies) {
+                        em.remove(movie);
+                        deleted++;
+                    }
+                    em.getTransaction().commit();
+                    System.out.println("Alle film uden release-dato er slettet fra databasen");
+                } else {
+                    System.out.println("Ingen film uden release-dato fundet");
+                    if (em.getTransaction().isActive()) {
+                        em.getTransaction().rollback();
+                    }
+                }
+            } catch (Exception e) {
+                if (transaction.isActive()) {
+                    transaction.rollback();
+                }
+                throw new JpaException("Fejl ved sletning af film uden release-dato", e);
+            }
+        }
+        return deleted;
+    }
+    public int deleteMoviesWithRatingOver(double rating) {
+        int deleted = 0;
+        try (EntityManager em = emf.createEntityManager()) {
+            EntityTransaction transaction = em.getTransaction();
+            try {
+                em.getTransaction().begin();
+                List<Movie> movies = em.createQuery(
+                        "SELECT m FROM Movie m WHERE m.voteAverage > :rating", Movie.class)
+                        .setParameter("rating", rating)
+                        .getResultList();
+
+                if (!movies.isEmpty()) {
+                    for(Movie movie : movies) {
+                        em.remove(movie);
+                        deleted++;
+                    }
+                    em.getTransaction().commit();
+                    System.out.println("Alle film med en rating over " + rating + " er slettet fra databasen");
+                } else {
+                    System.out.println("Ingen film med en rating over " + rating + " fundet");
+                    if (em.getTransaction().isActive()) {
+                        em.getTransaction().rollback();
+                    }
+                }
+            } catch (Exception e) {
+                if (transaction.isActive()) {
+                    transaction.rollback();
+                }
+                throw new JpaException("Fejl ved sletning af film med rating over " + rating, e);
+            }
+        }
+        return deleted;
     }
 
     // Metode til at søge efter film baseret på en del af titlen (case-insensitive)
@@ -400,7 +394,7 @@ public class MovieDAO {
             if (movie.getActors() != null) {
                 Set<Actor> mergedActors = new HashSet<>();
                 for (Actor actor : movie.getActors()) {
-                    Actor mergedActor = em.merge(actor);  // Merge actors
+                    Actor mergedActor = em.merge(actor);
                     mergedActors.add(mergedActor);
                 }
                 movie.setActors(mergedActors);
@@ -525,9 +519,6 @@ public class MovieDAO {
             throw new RuntimeException("Fejl under hentning af film: " + e.getMessage(), e);
         }
     }
-
-
-
 
     public List<Movie> getMoviesByGenre(String genreName) {
         try {
@@ -668,4 +659,5 @@ public class MovieDAO {
         }
         return movies;
     }
+
 }

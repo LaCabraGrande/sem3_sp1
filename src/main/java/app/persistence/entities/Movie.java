@@ -73,7 +73,7 @@ public class Movie {
     private Director director;
 
     // Relation til Actors
-    @ManyToMany(fetch = FetchType.EAGER)
+    @ManyToMany(fetch = FetchType.EAGER, cascade = CascadeType.MERGE)
     @JoinTable(
             name = "movie_actor",
             joinColumns = @JoinColumn(name = "movie_id"),
