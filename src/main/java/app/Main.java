@@ -45,7 +45,7 @@ public class Main {
         filmService.fetchAndSaveMovies();
 
         // Her optæller jeg antallet af film i databasen
-         System.out.println("Antal film i databasen: " + movieDAO.countMovies());
+         System.out.println(RED+"Antal film i databasen: "+ RESET + movieDAO.countMovies());
 
         // Eksempel: Hent og print alle film
         //List<Movie> allMovies = movieDAO.getAllMovies();
@@ -57,11 +57,12 @@ public class Main {
         // Jeg har valgt at rense lidt ud i databasen og slette film som ikke har nogen release-dato. Dette kunne jeg have gjort da jeg
         // itererede gennem min MovieDTO liste FilmService men ville hellere gøre det her
         int deletedMovies = movieDAO.deleteMoviesWithoutReleaseDate();
-        System.out.println("Slettede film uden udgivelsesdato: " + deletedMovies);
+        System.out.println(RED+"Slettede film uden udgivelsesdato: "+RESET + deletedMovies);
 
         // jeg har også valgt at slette film som har en rating på over 8.6 da det som regel er film som er blevet rated forkert
+        // kunne også have gjort dette i FilmService men valgte at gøre det her
         int deletedMovies2 = movieDAO.deleteMoviesWithRatingOver(8.6);
-        System.out.println("Slettede film med en rating over 9.0: " + deletedMovies2);
+        System.out.println(RED+"Slettede film med en rating over 8.6: "+RESET + deletedMovies2);
 
         // Her sletter jeg en film baseret på den angivne titel
         movieDAO.deleteByTitle("Festen");
@@ -96,7 +97,7 @@ public class Main {
         try {
             movieDAO.createNewMovie(newMovie);
             // Bekræftelse
-            System.out.println("Filmen blev tilføjet: " + newMovie.getTitle());
+            System.out.println(RED+"Film der blev tilføjet: "+RESET + newMovie.getTitle());
         } catch (Exception e) {
             System.err.println("Der opstod en fejl under tilføjelsen af filmen: " + e.getMessage());
         }
@@ -112,21 +113,21 @@ public class Main {
 
         // Henter her film baseret på en angivet rating
         List<Movie> topRatedMovies = movieDAO.getMoviesByRating(8.0);
-        System.out.println("\nFilm med en rating over 8.0:\n");
+        System.out.println(RED+"\nFilm med en rating over 8.0:\n"+RESET);
         for (Movie movie : topRatedMovies) {
             printMovieDetails(movie);
         }
 
         // Jeg henter her film baseret på det angivne udgivelsesår
         List<Movie> movies2024 = movieDAO.getMoviesByReleaseYear(2020);
-        System.out.println("\nFilm fra 2020:");
+        System.out.println(RED+"\nFilm fra 2020:"+RESET);
         for (Movie movie : movies2024) {
             printMovieDetails(movie);
         }
 
         // Jeg henter her alle skuespillere for en angivet filmtitel
         List<Actor> actors = filmService.getActorsByMovieTitle("Jagten");
-        System.out.println("\nSkuespillere som optræder i 'Jagten':\n");
+        System.out.println(RED+"\nSkuespillere som optræder i 'Jagten':\n"+RESET);
         for (Actor actor : actors) {
             System.out.println("Actor: " + actor.getName());
         }
@@ -137,7 +138,7 @@ public class Main {
 
         // Henter her alle film som en angivet skuespiller optræder i
         List<Movie> movies = filmService.findMoviesByActor("Anders W. Berthelsen");
-        System.out.println("\nFilm som 'Anders W. Berthelsen' spiller med i:\n");
+        System.out.println(RED+"\nFilm som 'Anders W. Berthelsen' spiller med i:\n"+RESET);
         for (Movie movie : movies) {
             System.out.println("- "+movie.getTitle());
         }
@@ -149,7 +150,7 @@ public class Main {
 
         // En metode til at søge efter film baseret på en del af titlen (case-insensitive)
         List<Movie> moviesByTitle = movieDAO.searchMoviesByTitle("Under");
-        System.out.println("\nFilm som indeholder 'Under' i titlen:\n");
+        System.out.println(RED+"\nFilm som indeholder 'Under' i titlen:\n"+RESET);
         moviesByTitle.forEach(Main::printMovieDetails);
 
         // Her udregner jeg den gennemsnitlige rating for alle film i Databasen
@@ -158,21 +159,21 @@ public class Main {
 
         // Få titlerne på de top-10 laveste ratede film
         List<Movie> lowestRatedMovies = movieDAO.getTop10LowestRatedMovies();
-        System.out.println("\nTop 10 laveste ratede film:\n");
+        System.out.println(RED+"\nTop 10 laveste ratede film:\n"+RESET);
         for (Movie movie : lowestRatedMovies) {
             System.out.println("- "+movie.getTitle() + " - Rating: " + movie.getVoteAverage());
         }
 
         // Få titlerne på de top-10 højeste ratede film
         List<Movie> highestRatedMovies = movieDAO.getTop10HighestRatedMovies();
-        System.out.println("\nTop 10 højeste ratede film:\n");
+        System.out.println(RED+"\nTop 10 højeste ratede film:\n"+RESET);
         for (Movie movie : highestRatedMovies) {
             System.out.println("- "+movie.getTitle() + " - Rating: " + movie.getVoteAverage());
         }
 
         // Få titlerne på de top-10 mest populære film
         List<Movie> mostPopularMovies = movieDAO.getTop10MostPopularMovies();
-        System.out.println("\nTop 10 mest populære film:\n");
+        System.out.println(RED+"\nTop 10 mest populære film:\n"+RESET);
         for (Movie movie : mostPopularMovies) {
             System.out.println("- "+movie.getTitle() + " - Popularitet: " + movie.getPopularity());
         }
