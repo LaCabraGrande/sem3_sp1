@@ -47,8 +47,8 @@ public class FilmService {
 
             for (MovieDTO movieDTO : movieDTOList) {
                 try {
-                    saveMovieWithDetails(movieDTO);
-                } catch (Exception innerException) {
+                   saveMovieWithDetails(movieDTO);
+            } catch (Exception innerException) {
                     System.err.println("Fejl når jeg gemmer filmen: " + innerException.getMessage());
                 }
             }
@@ -60,18 +60,14 @@ public class FilmService {
 
     private void saveMovieWithDetails(MovieDTO movieDTO) {
         Movie existingMovie = movieDAO.findByTitle(movieDTO.getTitle());
-
         if (existingMovie == null) {
             Set<Integer> genreIds = movieDTO.getGenreIds();
             List<String> genreNames = filmFetcher.getGenreNames(genreIds);
             movieDTO.setGenreNames(genreNames);
-
             DirectorDTO directorDTO = handleDirector(movieDTO);
             movieDTO.setDirector(directorDTO);
-
             Set<ActorDTO> actorDTOs = handleActors(movieDTO);
             movieDTO.setActors(actorDTOs);
-
             Movie movie = convertToEntity(movieDTO);
             movieDAO.create(movie);
         }
@@ -81,6 +77,7 @@ public class FilmService {
         Movie movie = new Movie();
         movie.setImdbId(movieDTO.getImdbId());
         movie.setTitle(movieDTO.getTitle());
+        movie.setDuration(movieDTO.getDuration());
         movie.setOverview(movieDTO.getOverview());
         movie.setReleaseDate(movieDTO.getReleaseDate());
         movie.setAdult(movieDTO.getIsAdult());
@@ -106,10 +103,8 @@ public class FilmService {
             actors.add(newActor);
         }
         movie.setActors(actors);
-
         Director director = convertToDirectorEntity(movieDTO.getDirector());
         movie.setDirector(director);
-
         return movie;
     }
 
@@ -123,14 +118,13 @@ public class FilmService {
     private Set<ActorDTO> handleActors(MovieDTO movieDTO) {
         Set<ActorDTO> actorsToReturn = new HashSet<>();
 
-        // Opret EntityManager
         try (EntityManager em = emf.createEntityManager()) {
-            em.getTransaction().begin();  // Start en ny transaktion
+            em.getTransaction().begin();
 
-            // Kontrollér om skuespillerlisten i movieDTO ikke er tom
+            // Her undersøger jeg om der er skuespillere i skuespillerlisten i movieDTO
             if (movieDTO.getActors() != null && !movieDTO.getActors().isEmpty()) {
                 for (ActorDTO actorDTO : movieDTO.getActors()) {
-                    // Forespørg for at se, om denne skuespiller allerede er tilknyttet filmen
+                    // Her undersøger jeg om skuespilleren allerede er tilknyttet filmen
                     TypedQuery<Long> query = em.createQuery(
                             "SELECT COUNT(a) FROM Movie m JOIN m.actors a WHERE m.id = :movieId AND a.id = :actorId", Long.class);
                     query.setParameter("movieId", movieDTO.getDatabaseId());
@@ -139,27 +133,22 @@ public class FilmService {
                     Long count = query.getSingleResult();
 
                     if (count == 0) {
-                        // Hvis relationen ikke eksisterer, tilføj skuespilleren til sættet
+                        // Hvis skuespilleren ikke allerede er i relationen, tilføjer jeg skuespilleren til sættet
                         actorsToReturn.add(actorDTO);
                     } else {
-                        // Log en advarsel eller håndter det faktum, at skuespilleren allerede er tilknyttet
-                        System.out.println("Actor " + actorDTO.getName() + " is already associated with the movie.");
+                        System.out.println("Skuespilleren " + actorDTO.getName() + " er allerede tilknyttet filmen.");
                     }
                 }
             }
 
-            em.getTransaction().commit();  // Commit transaktionen
+            em.getTransaction().commit();
         } catch (Exception e) {
-            // Håndter eventuelle fejl ved transaktionen
-            System.err.println("Fejl opstod ved behandling af skuespillere: " + e.getMessage());
+            System.err.println("Der opstod en fejl ved behandling af skuespillere: " + e.getMessage());
             e.printStackTrace();
         }
 
-        return actorsToReturn;  // Returner sættet af nye skuespillere
+        return actorsToReturn;
     }
-
-
-
 
     private Director convertToDirectorEntity(DirectorDTO directorDTO) {
         Director director = new Director();
@@ -212,12 +201,10 @@ public class FilmService {
             movies = query.getResultList();
         } catch (Exception e) {
             e.printStackTrace();
-            throw new JpaException("Fejl ved hentning af film for skuespiller: " + actorName, e);
+            throw new JpaException("Der opstod en fejl ved hentningen af film for skuespiller: " + actorName, e);
         } finally {
             em.close();
         }
         return movies;
     }
-
-
 }

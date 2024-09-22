@@ -399,7 +399,6 @@ public class MovieDAO {
                 }
                 movie.setActors(mergedActors);
             }
-
             em.persist(movie);
             em.getTransaction().commit();
         } catch (Exception e) {
@@ -566,17 +565,20 @@ public class MovieDAO {
         return query.getResultList();
     }
 
-    public List<Movie> getMoviesByReleaseYear(int year) {
+    public List<Movie> getMoviesByReleaseYearAndNationality(int year, String language) {
         String startOfYear = year + "-01-01";
         String endOfYear = year + "-12-31";
+        String languageCode = language;
 
         // Justerer her endOfYear til midnat den 31. december
         endOfYear = endOfYear + " 23:59:59";
 
-        String jpql = "SELECT m FROM Movie m WHERE m.releaseDate BETWEEN :startOfYear AND :endOfYear";
+        //String jpql = "SELECT m FROM Movie m WHERE m.releaseDate BETWEEN :startOfYear AND :endOfYear";
+        String jpql = "SELECT m FROM Movie m WHERE m.releaseDate BETWEEN :startOfYear AND :endOfYear AND m.originalLanguage = :languageCode";
         TypedQuery<Movie> query = em.createQuery(jpql, Movie.class);
         query.setParameter("startOfYear", startOfYear);
         query.setParameter("endOfYear", endOfYear);
+        query.setParameter("languageCode", languageCode);
         return query.getResultList();
     }
 

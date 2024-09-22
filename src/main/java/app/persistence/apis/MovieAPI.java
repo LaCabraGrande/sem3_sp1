@@ -12,6 +12,7 @@ public class MovieAPI {
     private Long id;
     private Long imdbId;
     private String title;
+    private Integer duration;
     private String overview;
     private String releaseDate;
     private boolean adult;

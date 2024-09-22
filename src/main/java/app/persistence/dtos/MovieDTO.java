@@ -15,6 +15,7 @@ public class MovieDTO {
     private Long databaseId;
     private Long imdbId;
     private String title;
+    private Integer duration;
     private String overview;
     private String releaseDate;
     private Boolean isAdult;

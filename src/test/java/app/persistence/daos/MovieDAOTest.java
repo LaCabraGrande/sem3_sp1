@@ -292,7 +292,9 @@ class MovieDAOTest {
         movie.setReleaseDate("2024-08-12");
         movieDAO.update(movie);
 
-        List<Movie> movies = movieDAO.getMoviesByReleaseYear(2024);
+        //List<Movie> movies = movieDAO.getMoviesByReleaseYearAndNationality(2024, "en");
+        List<Movie> movies = movieDAO.getMoviesByReleaseYearAndNationality(2024, "en");
+
 
         assertEquals(1, movies.size());
         assertEquals("The Dark Knight", movies.get(0).getTitle());

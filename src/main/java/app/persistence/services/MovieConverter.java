@@ -17,6 +17,7 @@ public class MovieConverter {
                 .id(movie.getId())
                 .imdbId(movie.getImdbId())
                 .title(movie.getTitle())
+                .duration(movie.getDuration())
                 .overview(movie.getOverview())
                 .releaseDate(movie.getReleaseDate())
                 .adult(movie.isAdult())

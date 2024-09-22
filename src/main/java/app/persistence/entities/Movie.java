@@ -25,6 +25,9 @@ public class Movie {
     @Column(name = "title", nullable = false)
     private String title;
 
+    @Column(name = "duration")
+    private Integer duration;
+
     @Column(name = "overview", length = 1000)
     private String overview;
 
@@ -73,7 +76,8 @@ public class Movie {
     private Director director;
 
     // Relation til Actors
-    @ManyToMany(fetch = FetchType.EAGER, cascade = CascadeType.MERGE)
+    @ManyToMany(fetch = FetchType.EAGER)
+    //@ManyToMany(fetch = FetchType.EAGER, cascade = CascadeType.MERGE)
     @JoinTable(
             name = "movie_actor",
             joinColumns = @JoinColumn(name = "movie_id"),
