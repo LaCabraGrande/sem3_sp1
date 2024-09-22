@@ -301,13 +301,9 @@ public class FilmFetcher {
         for (Map.Entry<Integer, String> entry : genreMap.entrySet()) {
             Long genreId = entry.getKey().longValue();  // Konverterer int til Long
             String name = entry.getValue();
-
             try {
-                // Kontrollerer om genren allerede eksisterer
                 Genre existingGenre = genreDAO.findById(genreId);
-
                 if (existingGenre == null) {
-                    // Opretter ny genre, hvis den ikke allerede findes
                     Genre genre = new Genre();
                     genre.setGenreId(Math.toIntExact(genreId));
                     genre.setName(name);
