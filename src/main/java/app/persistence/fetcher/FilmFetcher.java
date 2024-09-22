@@ -298,20 +298,30 @@ public class FilmFetcher {
     }
 
     public void populateGenres() throws JpaException {
-        for (Map.Entry<Integer, String> entry: genreMap.entrySet()) {
-            int genreId = entry.getKey();
+        for (Map.Entry<Integer, String> entry : genreMap.entrySet()) {
+            Long genreId = entry.getKey().longValue();  // Konverterer int til Long
             String name = entry.getValue();
 
-            Genre genre = new Genre();
-            genre.setGenreId(genreId);
-            genre.setName(name);
             try {
-                genreDAO.create(genre);
+                // Kontrollerer om genren allerede eksisterer
+                Genre existingGenre = genreDAO.findById(genreId);
+
+                if (existingGenre == null) {
+                    // Opretter ny genre, hvis den ikke allerede findes
+                    Genre genre = new Genre();
+                    genre.setGenreId(Math.toIntExact(genreId));
+                    genre.setName(name);
+                    genreDAO.create(genre);
+                } else {
+                    System.out.println("Genre med ID " + genreId + " eksisterer allerede: " + existingGenre.getName());
+                }
             } catch (Exception e) {
-                throw new JpaException("Kunne ikke oprette genre med ID " + entry.getKey() + " og navn " + entry.getValue(), e);
+                throw new JpaException("Kunne ikke oprette eller tjekke genre med ID " + genreId + " og navn " + name, e);
             }
         }
     }
+
+
 
     // Henter her genre-navne baseret på genre-IDs
     public List<String> getGenreNames(Set<Integer> genreIds) {
