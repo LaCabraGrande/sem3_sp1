@@ -6,13 +6,13 @@ import lombok.*;
 import java.util.Objects;
 import java.util.Set;
 
-@Entity
-@Table(name = "movie")
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
 @ToString
+@Entity
+@Table(name = "movie")
 public class Movie {
 
     @Id
@@ -58,7 +58,6 @@ public class Movie {
     @Column(name = "vote_count")
     private int voteCount;
 
-    // Relation til Genre
     @ManyToMany(fetch = FetchType.EAGER)
     @JoinTable(
             name = "movie_genre",
@@ -66,24 +65,21 @@ public class Movie {
             inverseJoinColumns = @JoinColumn(name = "genre_id")
     )
     @ToString.Exclude
-    @JsonManagedReference // Denne styrer serialisering af relationen
+    @JsonManagedReference
     private Set<Genre> genres;
 
-    // Relation til Director
     @ManyToOne(optional = true)
     @JoinColumn(name = "director_id", referencedColumnName = "id")
     @ToString.Exclude
     private Director director;
 
-    // Relation til Actors
     @ManyToMany(fetch = FetchType.EAGER)
-    //@ManyToMany(fetch = FetchType.EAGER, cascade = CascadeType.MERGE)
     @JoinTable(
             name = "movie_actor",
             joinColumns = @JoinColumn(name = "movie_id"),
             inverseJoinColumns = @JoinColumn(name = "actor_id")
     )
-    @JsonManagedReference // Denne styrer serialisering af relationen
+    @JsonManagedReference
     @ToString.Exclude
     private Set<Actor> actors;
 

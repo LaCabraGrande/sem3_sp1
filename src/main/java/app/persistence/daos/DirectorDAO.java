@@ -6,12 +6,9 @@ import app.persistence.entities.Director;
 import app.persistence.entities.Movie;
 import app.persistence.enums.HibernateConfigState;
 import app.persistence.exceptions.JpaException;
-
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.EntityManagerFactory;
 import jakarta.persistence.EntityTransaction;
-
-import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -34,7 +31,6 @@ public class DirectorDAO {
         return instance;
     }
 
-
     public void create(DirectorDTO dto) {
         try (EntityManager em = emf.createEntityManager()) {
             em.getTransaction().begin();
@@ -47,25 +43,24 @@ public class DirectorDAO {
             if (em.getTransaction().isActive()) {
                 em.getTransaction().rollback();
             }
-            throw new JpaException("An error occurred while creating director", e);
+            throw new JpaException("Der opstod en fejl under oprettelse af en instruktør", e);
         }
     }
 
-
     public Director findById(Long id) {
         if (id == null) {
-            throw new IllegalArgumentException("ID cannot be null");
+            throw new IllegalArgumentException("Id kan ikke være null");
         }
 
         EntityManager em = null;
         try {
             em = emf.createEntityManager();
             Director director = em.find(Director.class, id);
-            System.out.println("Found director with ID " + id + ": " + director);
+            System.out.println("Fandt instruktør med " + id + ": " + director);
             return director;
         } catch (Exception e) {
-            e.printStackTrace(); // Udførlige fejlmeddelelser
-            throw new JpaException("An error occurred while finding director by ID", e);
+            e.printStackTrace();
+            throw new JpaException("Der opstod en fejl under søgning efter en instruktør", e);
         } finally {
             if (em != null && em.isOpen()) {
                 em.close();
@@ -73,20 +68,17 @@ public class DirectorDAO {
         }
     }
 
-
     public Director findDirectorById(Long id) {
         try {
             return em.find(Director.class, id);
         } catch (Exception e) {
-            throw new JpaException("An error occurred while finding the director by ID", e);
+            throw new JpaException("Der opstod en fejl under søgning efter en instruktør", e);
         }
     }
 
     public boolean directorExists(Long id) {
         return findDirectorById(id) != null;
     }
-
-
 
     public void update(DirectorDTO dto) {
         EntityManager em = emf.createEntityManager();
@@ -103,7 +95,7 @@ public class DirectorDAO {
             if (transaction.isActive()) {
                 transaction.rollback();
             }
-            throw new JpaException("An error occurred while updating director", e);
+            throw new JpaException("Der opstod en fejl under opdatering af en instruktør", e);
         } finally {
             em.close();
         }
@@ -111,51 +103,42 @@ public class DirectorDAO {
 
     public Director findOrCreateDirector(Director director) {
         if (director == null) {
-            throw new IllegalArgumentException("Director cannot be null");
+            throw new IllegalArgumentException("En instruktør kan ikke være null");
         }
-
-        //System.out.println("Attempting to find director with ID: " + director.getId());
 
         Director foundDirector = null;
 
         try (EntityManager em = emf.createEntityManager()) {
-            // Først, prøv at finde direktøren i databasen
-            foundDirector = em.find(Director.class, director.getId());
+           foundDirector = em.find(Director.class, director.getId());
 
             if (foundDirector != null) {
-                //System.out.println("Director found: " + foundDirector);
-                return foundDirector;
+               return foundDirector;
             }
 
-            // Hvis ikke fundet, opret en ny direktør
-            //System.out.println("Director not found, creating new director: " + director);
             em.getTransaction().begin();
             em.persist(director);
             em.getTransaction().commit();
-            //System.out.println("Director created successfully: " + director);
             return director;
         } catch (Exception e) {
-            e.printStackTrace(); // Udførlige fejlmeddelelser
-            throw new JpaException("An error occurred while finding or creating director", e);
+            e.printStackTrace();
+            throw new JpaException("Der opstod en fejl under oprettelse af en instruktør", e);
         }
     }
 
-
-
     public void create(Director director) {
         if (director == null) {
-            throw new IllegalArgumentException("Director cannot be null");
+            throw new IllegalArgumentException("En instruktør kan ikke være null");
         }
 
         try (EntityManager em = emf.createEntityManager()) {
             em.getTransaction().begin();
-            // Brug merge i stedet for persist for at undgå problemer med vedhæftede entiteter
+            // Her bruger jeg merge i stedet for persist for at undgå problemer med vedhæftede entiteter
             em.merge(director);
             em.getTransaction().commit();
-            System.out.println("Director created or updated: " + director);
+            System.out.println("Instruktør gemt eller opdateret: " + director);
         } catch (Exception e) {
-            e.printStackTrace(); // Udførlige fejlmeddelelser
-            throw new JpaException("An error occurred while creating or updating director", e);
+            e.printStackTrace();
+            throw new JpaException("Der opstod en fejl under merge eller persist af en instruktør", e);
         }
     }
 

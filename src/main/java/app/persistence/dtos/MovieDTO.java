@@ -1,7 +1,6 @@
 package app.persistence.dtos;
 
 import lombok.*;
-
 import java.util.List;
 import java.util.Set;
 
@@ -29,7 +28,6 @@ public class MovieDTO {
     private Set<Integer> genreIds;
     private List<String> genreNames;
 
-    // Ny felter for skuespillere og instruktører
     private Set<ActorDTO> actors;
     private DirectorDTO director;
 }

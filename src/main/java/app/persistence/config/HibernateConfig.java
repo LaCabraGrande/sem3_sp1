@@ -34,7 +34,6 @@ public class HibernateConfig {
         configuration.addAnnotatedClass(Genre.class);
         configuration.addAnnotatedClass(Actor.class);
         configuration.addAnnotatedClass(Director.class);
-        configuration.addAnnotatedClass(GenreData.class);
     }
 
     private static EntityManagerFactory buildEntityFactoryConfig() {

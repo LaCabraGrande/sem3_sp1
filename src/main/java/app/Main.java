@@ -34,13 +34,10 @@ public class Main {
         ActorDAO actorDAO = ActorDAO.getInstance(HibernateConfigState.NORMAL);
         DirectorDAO directorDAO = DirectorDAO.getInstance(HibernateConfigState.NORMAL);
         FilmFetcher filmFetcher = new FilmFetcher(genreDAO);
-        //FilmService filmService = new FilmService(filmFetcher, movieDAO, genreDAO, actorDAO, directorDAO, emf);
+        FilmService filmService = new FilmService(filmFetcher, movieDAO, genreDAO, actorDAO, directorDAO, emf);
 
         // Her gemmer jeg alle genre i databasen
         filmFetcher.populateGenres();
-
-        // Opretter her en FilmService
-        FilmService filmService = new FilmService(filmFetcher, movieDAO, genreDAO, actorDAO, directorDAO, emf);
 
         // Her henter jeg og gemmer filmene i databasen
         filmService.fetchAndSaveMovies();
@@ -99,11 +96,10 @@ public class Main {
         try {
             movieDAO.createNewMovie(newMovie);
             // Bekræftelse
-            System.out.println(BLUE+"Film der blev tilføjet: "+RESET + newMovie.getTitle());
+            System.out.println(BLUE+"Film der blev tilføjet til Databasen: "+RESET + newMovie.getTitle());
         } catch (Exception e) {
             System.err.println("Der opstod en fejl under tilføjelsen af filmen: " + e.getMessage());
         }
-
 
         // Henter her film baseret på en angivet genre
         //List<Movie> specificGenre = movieDAO.getMoviesByGenre("Drama");
@@ -119,7 +115,7 @@ public class Main {
         //    printMovieDetails(movie);
         //}
 
-        // Jeg henter her film baseret på det angivne udgivelsesår
+        // Jeg henter her film baseret på det angivne udgivelsesår og på nationalitet
         //List<Movie> movies2024 = movieDAO.getMoviesByReleaseYearAndNationality(2024, "da");
         //System.out.println(BLUE+"\nFilm fra 2024:\n"+RESET);
         //for (Movie movie : movies2024) {
@@ -144,17 +140,17 @@ public class Main {
             System.out.println("- "+movie.getTitle());
         }
         // En metode til at opdaterer release-datoen for en film
-        movieDAO.updateMovieReleaseDate("Jagten", "2024-01-01");
+        movieDAO.updateMovieReleaseDate("Retfærdighedens ryttere", "2020-11-01");
 
         // En metode til at opdaterer titlen for en film
-        //movieDAO.updateMovieTitle("Jagten", "Jagten 2: The Hunt Continues");
+        //movieDAO.updateMovieTitle("Retfærdighedens ryttere", "Retfærdighedens Ryttere");
 
         // En metode til at søge efter film baseret på en del af titlen (case-insensitive)
-        List<Movie> moviesByTitle = movieDAO.searchMoviesByTitle("Under");
-        System.out.println(BLUE+"\nFilm som indeholder 'Under' i titlen:\n"+RESET);
+        List<Movie> moviesByTitle = movieDAO.searchMoviesByTitle("sandet");
+        System.out.println(BLUE+"\nFilm som indeholder 'sandet' i titlen:\n"+RESET);
         moviesByTitle.forEach(Main::printMovieDetails);
 
-        // Her udregner jeg den gennemsnitlige rating for alle film i Databasen
+        // Her udregner jeg den gennemsnitlige rating for alle film i Databasen og udskriver den med en decimal
         double averageRating = movieDAO.getTotalAverageRating();
         System.out.printf("\nGennemsnitlig rating for alle film i Databasen: %.1f%n", averageRating);
 

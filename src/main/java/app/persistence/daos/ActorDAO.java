@@ -28,7 +28,6 @@ public class ActorDAO {
         return instance;
     }
 
-
     public void create(Actor actor) {
         try (EntityManager em = emf.createEntityManager()) {
             em.getTransaction().begin();
@@ -38,22 +37,18 @@ public class ActorDAO {
             if (em.getTransaction().isActive()) {
                 em.getTransaction().rollback();
             }
-            throw new JpaException("An error occurred while creating actor", e);
+            throw new JpaException("Der opstod en fejl under oprettelse af en skuespiller", e);
         }
     }
-
-
 
     public Actor findById(Long id) {
 
         try (EntityManager em = emf.createEntityManager()) {
-            return em.find(Actor.class, id); // Return an Actor, not ActorDTO
+            return em.find(Actor.class, id);
         } catch (Exception e) {
-            throw new JpaException("An error occurred while finding actor", e);
+            throw new JpaException("Der opstod en fejl under oprettelse af en skuespiller", e);
         }
     }
-
-
 
     public void update(ActorDTO dto) {
         try (EntityManager em = emf.createEntityManager()) {
@@ -68,7 +63,7 @@ public class ActorDAO {
             if (em.getTransaction().isActive()) {
                 em.getTransaction().rollback();
             }
-            throw new JpaException("An error occurred while updating actor", e);
+            throw new JpaException("Der opstod en fejl under opdatering af en skuespiller", e);
         } finally {
             em.close();
         }
@@ -86,7 +81,7 @@ public class ActorDAO {
             if (em.getTransaction().isActive()) {
                 em.getTransaction().rollback();
             }
-            throw new JpaException("An error occurred while deleting actor", e);
+            throw new JpaException("Der opstod en fejl under sletning af en skuespiller", e);
         } finally {
             em.close();
         }
@@ -101,10 +96,9 @@ public class ActorDAO {
                             .id(a.getId())
                             .name(a.getName())
                             .build())
-                    .collect(Collectors.toList()); // Hvis du bruger Java 8 eller nyere
+                    .collect(Collectors.toList());
         } finally {
             em.close();
         }
     }
-
 }

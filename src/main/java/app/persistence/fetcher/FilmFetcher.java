@@ -169,6 +169,7 @@ public class FilmFetcher {
     public MovieDTO fetchMovieWithDetails(Long movieId) throws IOException, InterruptedException {
         // URL for at hente filmdetaljer
         String movieUrl = "https://api.themoviedb.org/3/movie/" + movieId + "?api_key=" + API_KEY;
+
         // URL for at hente credits (skuespillere og instruktør)
         String creditsUrl = "https://api.themoviedb.org/3/movie/" + movieId + "/credits?api_key=" + API_KEY;
 
@@ -180,10 +181,7 @@ public class FilmFetcher {
         JsonNode movieJson = objectMapper.readTree(movieJsonResponse);
         JsonNode creditsJson = objectMapper.readTree(creditsJsonResponse);
 
-        // Tjek og udskriv runtime
-        int runtime = movieJson.has("runtime") ? movieJson.get("runtime").asInt() : 0;
-
-        // Opret MovieDTO ved at bruge builder-patternet
+        // Opretter her et MovieDTO ved at bruge builder til at bygge det
         MovieDTO movieDTO = MovieDTO.builder()
                 .imdbId(movieJson.get("id").asLong())
                 .title(movieJson.has("title") ? movieJson.get("title").asText() : "Ukendt titel")
@@ -200,9 +198,8 @@ public class FilmFetcher {
                 .voteCount(movieJson.has("vote_count") ? movieJson.get("vote_count").asInt() : 0)
                 .genreIds(parseGenreIds(movieJson.path("genres")))
                 .build();
-        // Tilføj skuespillere og instruktør til movieDTO ved hjælp af credits JSON
+        // Tilføjer her skuespillere og instruktør til hver enkelt movieDTO ved hjælp af creditsJson
         addActorsAndDirector(movieDTO, creditsJson);
-        //System.out.println("MovieDTO lige inden den returneres i fetchMovieWithDetails: " + movieDTO.getDuration());
         return movieDTO;
     }
 
@@ -216,7 +213,6 @@ public class FilmFetcher {
         if (response.statusCode() == 200) {
             return response.body();
         } else {
-            LOGGER.warning("Kunne ikke hente API-svaret. Statuskode: " + response.statusCode());
             throw new IOException("Kunne ikke hente API-svaret. Statuskode: " + response.statusCode());
         }
     }
@@ -310,9 +306,8 @@ public class FilmFetcher {
             genre.setGenreId(genreId);
             genre.setName(name);
             try {
-                genreDAO.create(genre); // Hvis genreDAO.create accepterer Genre entiteten
+                genreDAO.create(genre);
             } catch (Exception e) {
-                LOGGER.severe("Kunne ikke oprette genre med ID " + entry.getKey() + " og navn " + entry.getValue() + ": " + e.getMessage());
                 throw new JpaException("Kunne ikke oprette genre med ID " + entry.getKey() + " og navn " + entry.getValue(), e);
             }
         }

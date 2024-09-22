@@ -39,6 +39,27 @@ public class MovieDAO {
         }
     }
 
+
+    public void dropAllTables() {
+       try (EntityManager em = emf.createEntityManager()) {
+            em.getTransaction().begin();
+            // Her sletter jeg alle mine tabeller i databasen
+            em.createNativeQuery("DROP TABLE IF EXISTS Movie CASCADE").executeUpdate();
+            em.createNativeQuery("DROP TABLE IF EXISTS Genre CASCADE").executeUpdate();
+            em.createNativeQuery("DROP TABLE IF EXISTS Actor CASCADE").executeUpdate();
+            em.createNativeQuery("DROP TABLE IF EXISTS Director CASCADE").executeUpdate();
+            em.createNativeQuery("DROP TABLE IF EXISTS movie_actor CASCADE").executeUpdate();
+            em.createNativeQuery("DROP TABLE IF EXISTS movie_genre CASCADE").executeUpdate();
+            em.getTransaction().commit();
+            System.out.println("Alle tabeller er blevet slettet i Databasen!");
+        } catch (Exception e) {
+            if (em.getTransaction().isActive()) {
+                em.getTransaction().rollback();
+            }
+            e.printStackTrace();
+        }
+    }
+
     // Metode til at finde en film baseret på id
     public Movie findById(Long id) {
         try (EntityManager em = emf.createEntityManager()) {
@@ -410,6 +431,7 @@ public class MovieDAO {
         }
     }
 
+    // Metode til at oprette en ny genre men bruger den kun i test-klassen
     public void create(GenreDTO dto) {
         try (EntityManager em = emf.createEntityManager()) {
             EntityTransaction transaction = em.getTransaction();
@@ -442,6 +464,7 @@ public class MovieDAO {
         }
     }
 
+    // Metode til at oprette en ny genre men bruger den kun i test-klassen
     public void create(Genre genre) {
         try (EntityManager em = emf.createEntityManager()) {
             EntityTransaction transaction = em.getTransaction();
@@ -458,6 +481,7 @@ public class MovieDAO {
         }
     }
 
+    // Metode til at oprette en ny skuespiller men bruger den kun i test-klassen
     public void create(ActorDTO dto) {
         try (EntityManager em = emf.createEntityManager()) {
             EntityTransaction transaction = em.getTransaction();
@@ -477,6 +501,7 @@ public class MovieDAO {
         }
     }
 
+    // Metode til at oprette en ny skuespiller men bruger den kun i test-klassen
     public void create(DirectorDTO dto) {
         try (EntityManager em = emf.createEntityManager()) {
             EntityTransaction transaction = em.getTransaction();
@@ -648,7 +673,6 @@ public class MovieDAO {
     }
 
     public List<Movie> getMoviesByActor(String actorName) {
-
         List<Movie> movies;
         try(EntityManager em = emf.createEntityManager()) {
             TypedQuery<Movie> query = em.createQuery(
@@ -661,5 +685,4 @@ public class MovieDAO {
         }
         return movies;
     }
-
 }

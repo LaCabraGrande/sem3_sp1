@@ -3,15 +3,14 @@ package app.persistence.entities;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.*;
-
 import java.util.Set;
 
-@Entity
-@Table(name = "director")
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
+@Entity
+@Table(name = "director")
 public class Director {
 
     @Id
@@ -21,7 +20,6 @@ public class Director {
     @Column(name = "name", nullable = true)
     private String name;
 
-    // Bidirektionel relation til film
     @OneToMany(mappedBy = "director")
     @JsonIgnore
     @ToString.Exclude

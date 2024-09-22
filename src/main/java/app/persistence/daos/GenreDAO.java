@@ -1,16 +1,11 @@
 package app.persistence.daos;
+
 import app.persistence.config.HibernateConfig;
-import app.persistence.dtos.ActorDTO;
-import app.persistence.dtos.DirectorDTO;
-import app.persistence.dtos.MovieDTO;
 import app.persistence.enums.HibernateConfigState;
 import app.persistence.exceptions.JpaException;
 import jakarta.persistence.*;
-import app.persistence.dtos.GenreDTO;
 import app.persistence.entities.Genre;
 import java.util.stream.Collectors;
-
-import java.util.List;
 import java.util.Set;
 
 public class GenreDAO {
@@ -37,11 +32,10 @@ public class GenreDAO {
         }
     }
 
-
-    public Genre findById(Long id) {
+    public Genre findById(Long id)
+    {
         return em.find(Genre.class, id);
     }
-
 
     public Genre update(Genre genre) {
         EntityTransaction transaction = em.getTransaction();
@@ -56,7 +50,6 @@ public class GenreDAO {
         }
     }
 
-
     public void create(Genre genre) {
         EntityTransaction transaction = em.getTransaction();
         try (EntityManager em = emf.createEntityManager()) {
@@ -69,7 +62,6 @@ public class GenreDAO {
         }
     }
 
-
     public Set<Genre> findGenresByIds(Set<Integer> genreIds) {
         try (EntityManager em = emf.createEntityManager()) {
             return em.createQuery("SELECT g FROM Genre g WHERE g.genreId IN :ids", Genre.class)
@@ -79,13 +71,6 @@ public class GenreDAO {
         } catch (Exception e) {
             throw new JpaException("An error occurred while fetching genres by ids", e);
         }
-    }
-
-
-
-
-    private EntityManager getEntityManager() {
-        return emf.createEntityManager();
     }
 
     public long countGenres() {

@@ -1,7 +1,6 @@
 package app.persistence.entities;
 
 import com.fasterxml.jackson.annotation.JsonBackReference;
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.*;
 import java.util.Objects;
@@ -17,16 +16,16 @@ public class Genre {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;  // Matcher Long id i GenreDTO
+    private Long id;
 
     @Column(name = "genre_id", unique = true, nullable = false)
-    private int genreId;  // Matcher genreId i GenreDTO
+    private int genreId;
 
     @Column(name = "name", nullable = false)
-    private String name;  // Matcher name i GenreDTO
+    private String name;
 
     @ManyToMany(mappedBy = "genres")
-    @JsonBackReference // Stopper serialisering her
+    @JsonBackReference
     @ToString.Exclude
     private Set<Movie> movies;
 
