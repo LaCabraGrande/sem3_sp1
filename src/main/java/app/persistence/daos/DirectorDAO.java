@@ -68,6 +68,17 @@ public class DirectorDAO {
         }
     }
 
+    public Director findDirectorByName(String name) {
+
+        try (EntityManager em = emf.createEntityManager()) {
+            return em.createQuery("SELECT d FROM Director d WHERE d.name = :name", Director.class)
+                    .setParameter("name", name)
+                    .getSingleResult();
+        } catch (Exception e) {
+            throw new JpaException("Der opstod en fejl under søgning efter en instruktør", e);
+        }
+    }
+
     public Director findDirectorById(Long id) {
         try {
             return em.find(Director.class, id);

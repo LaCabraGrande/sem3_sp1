@@ -101,4 +101,13 @@ public class ActorDAO {
             em.close();
         }
     }
+    public Actor findByName(String name) {
+        try (EntityManager em = emf.createEntityManager()) {
+            return em.createQuery("SELECT a FROM Actor a WHERE a.name = :name", Actor.class)
+                    .setParameter("name", name)
+                    .getSingleResult();
+        } catch (Exception e) {
+            throw new JpaException("Der opstod en fejl under hentning af skuespiller", e);
+        }
+    }
 }

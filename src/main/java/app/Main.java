@@ -13,10 +13,8 @@ import app.persistence.fetcher.FilmFetcher;
 import app.persistence.services.FilmService;
 import jakarta.persistence.EntityManagerFactory;
 import app.persistence.config.HibernateConfig;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
-import java.util.StringTokenizer;
+
+import java.util.*;
 import java.util.stream.Collectors;
 
 public class Main {
@@ -28,163 +26,337 @@ public class Main {
     private static final String RESET = "\u001B[0m";
 
     public static void main(String[] args) {
-        // Her opretter jeg instanser af mine klasser
         MovieDAO movieDAO = MovieDAO.getInstance(HibernateConfigState.NORMAL);
         GenreDAO genreDAO = GenreDAO.getInstance(HibernateConfigState.NORMAL);
         ActorDAO actorDAO = ActorDAO.getInstance(HibernateConfigState.NORMAL);
         DirectorDAO directorDAO = DirectorDAO.getInstance(HibernateConfigState.NORMAL);
         FilmFetcher filmFetcher = new FilmFetcher(genreDAO);
         FilmService filmService = new FilmService(filmFetcher, movieDAO, genreDAO, actorDAO, directorDAO, emf);
+        Scanner scanner = new Scanner(System.in);
+        if (movieDAO.getAllMovies().isEmpty()) {
+            filmFetcher.populateGenres();
+            filmService.fetchAndSaveMovies();
+        }
 
-        // Her gemmer jeg alle genre i databasen
-        filmFetcher.populateGenres();
+        showMenu(movieDAO, genreDAO, actorDAO, directorDAO, filmService, scanner);
 
-        // Her henter jeg og gemmer filmene i databasen
-        filmService.fetchAndSaveMovies();
+        scanner.close();
+    }
 
-        // Her optæller jeg antallet af film i databasen
-         System.out.println(BLUE+"Antal film i databasen: "+ RESET + movieDAO.countMovies());
+    private static void showMenu(MovieDAO movieDAO, GenreDAO genreDAO, ActorDAO actorDAO, DirectorDAO directorDAO, FilmService filmService, Scanner scanner) {
+        int choice;
+        do {
+            System.out.println(BLUE + "\n--- Menu ---" + RESET);
+            System.out.println("1. Tilføj ny film");
+            System.out.println("2. Vis film detaljer");
+            System.out.println("3. Hent film fra bestemt årstal");
+            System.out.println("4. Hent skuespillere for en film");
+            System.out.println("5. Hent instruktør for en film");
+            System.out.println("6. Hent film af en skuespiller");
+            System.out.println("7. Opdater udgivelsesdato for en film");
+            System.out.println("8. Opdater titel for en film");
+            System.out.println("9. Søg efter film baseret på titel");
+            System.out.println("10. Vis gennemsnitlig rating for alle film");
+            System.out.println("11. Vis top 10 laveste ratede film");
+            System.out.println("12. Vis top 10 højeste ratede film");
+            System.out.println("13. Vis top 10 mest populære film");
+            System.out.println("0. Afslut");
+            System.out.print("Vælg en handling: ");
+            choice = scanner.nextInt();
+            scanner.nextLine(); // Capture newline
 
-        // Eksempel: Hent og print alle film
-        //List<Movie> allMovies = movieDAO.getAllMovies();
-        //System.out.println("\nAntal film i databasen:\n"+allMovies.size());
-        //for (Movie movie : allMovies) {
-        //    printMovieDetails(movie);
-        //}
+            switch (choice) {
+                case 1:
+                    tilfoejNyFilm(movieDAO, genreDAO, actorDAO, directorDAO, scanner);
+                    break;
+                case 2:
+                    System.out.print("Indtast filmtitel for at se alle detaljer: ");
+                    String title = scanner.nextLine();
+                    Movie movieDetails = movieDAO.findByTitle(title);
+                    if (movieDetails != null) {
+                        printMovieDetails(movieDetails);
+                    } else {
+                        System.out.println("Film ikke fundet.");
+                    }
+                    break;
+                case 3:
+                    System.out.println("Indtast det årstal du ønsker at se film fra: ");
+                    int year = scanner.nextInt();
+                    List<Movie> moviesYear = movieDAO.getMoviesByReleaseYearAndNationality(year, "da");
+                    if(moviesYear != null && !moviesYear.isEmpty()) {
+                        System.out.println(BLUE + "\nFilm fra: " + RESET + year+"\n");
+                        for(Movie movie : moviesYear) {
+                            printMovieDetails(movie);
+                        }
+                    } else {
+                        System.out.println("Ingen film fundet fra " + year);
+                    }
+                    break;
+                case 4:
+                    System.out.print("Indtast original filmtitel for at hente skuespillere: ");
+                    String movieTitle = scanner.nextLine();
+                    List<Actor> actors = filmService.getActorsByMovieTitle(movieTitle);
+                    System.out.println(BLUE + "\nSkuespillere i '" + movieTitle + "':\n" + RESET);
+                    for (Actor actor : actors) {
+                        System.out.println("Actor: " + actor.getName());
+                    }
+                    break;
+                case 5:
+                    System.out.print("Indtast original filmtitel for at hente instruktør: ");
+                    String directorMovieTitle = scanner.nextLine();
+                    Director director = filmService.getDirectorByMovieTitle(directorMovieTitle);
+                    System.out.println("\nInstruktøren af '" + directorMovieTitle + "': " + (director != null ? director.getName() : "Ukendt"));
+                    break;
+                case 6:
+                    System.out.print("Indtast skuespillerens navn for at finde deres film: ");
+                    String actorName = scanner.nextLine();
+                    List<Movie> moviesByActor = filmService.findMoviesByActor(actorName);
+                    System.out.println(BLUE + "\nFilm som '" + actorName + "' spiller med i:\n" + RESET);
+                    for (Movie movie : moviesByActor) {
+                        System.out.println("- " + movie.getOriginalTitle());
+                    }
+                    break;
+                case 7:
+                    System.out.print("Indtast filmtitel for at opdatere udgivelsesdato: ");
+                    String updateTitleDate = scanner.nextLine();
+                    System.out.print("Indtast ny udgivelsesdato (YYYY-MM-DD): ");
+                    String newReleaseDate = scanner.nextLine();
+                    movieDAO.updateMovieReleaseDate(updateTitleDate, newReleaseDate);
+                    System.out.println("Udgivelsesdato opdateret for '" + updateTitleDate + "'.");
+                    break;
+                case 8:
+                    System.out.print("Indtast filmtitel for at opdatere titel: ");
+                    String updateTitleOld = scanner.nextLine();
+                    System.out.print("Indtast ny titel: ");
+                    String newTitle = scanner.nextLine();
+                    movieDAO.updateMovieTitle(updateTitleOld, newTitle);
+                    System.out.println("Titel opdateret for '" + updateTitleOld + "'.");
+                    break;
+                case 9:
+                    System.out.print("Indtast del af titlen for at søge: ");
+                    String searchTitle = scanner.nextLine();
+                    List<Movie> moviesByTitle = movieDAO.searchMoviesByTitle(searchTitle);
+                    System.out.println(BLUE + "\nFilm som indeholder '" + searchTitle + "' i titlen:\n" + RESET);
+                    moviesByTitle.forEach(Main::printMovieDetails);
+                    break;
+                case 10:
+                    double averageRating = movieDAO.getTotalAverageRating();
+                    System.out.printf("\nGennemsnitlig rating for alle film i Databasen: %.1f%n", averageRating);
+                    break;
+                case 11:
+                    List<Movie> lowestRatedMovies = movieDAO.getTop10LowestRatedMovies();
+                    System.out.println(BLUE + "\nTop 10 laveste ratede film:\n" + RESET);
+                    for (Movie movie : lowestRatedMovies) {
+                        System.out.println("- " + movie.getOriginalTitle() + " - Rating: " + movie.getVoteAverage());
+                    }
+                    break;
+                case 12:
+                    List<Movie> highestRatedMovies = movieDAO.getTop10HighestRatedMovies();
+                    System.out.println(BLUE + "\nTop 10 højeste ratede film:\n" + RESET);
+                    for (Movie movie : highestRatedMovies) {
+                        System.out.println("- " + movie.getOriginalTitle() + " - Rating: " + movie.getVoteAverage());
+                    }
+                    break;
+                case 13:
+                    List<Movie> mostPopularMovies = movieDAO.getTop10MostPopularMovies();
+                    System.out.println(BLUE + "\nTop 10 mest populære film:\n" + RESET);
+                    for (Movie movie : mostPopularMovies) {
+                        System.out.println("- " +movie.getOriginalTitle() + " - Popularitet: " + movie.getPopularity());
+                    }
+                    break;
+                case 0:
+                    System.out.println("Afslutter programmet.");
+                    break;
+                default:
+                    System.out.println("Ugyldigt valg, prøv igen.");
+                    break;
+            }
+        } while (choice != 0);
+    }
 
-        // Jeg har valgt at rense lidt ud i databasen og slette film som ikke har nogen release-dato. Dette kunne jeg have gjort da jeg
-        // itererede gennem min MovieDTO-liste i FilmService men har gjort
-        //int deletedMovies = movieDAO.deleteMoviesWithoutReleaseDate();
-        //System.out.println(BLUE+"Slettede film uden udgivelsesdato: "+RESET + deletedMovies);
 
-        // jeg har også valgt at slette film som har en rating på over 8.6 da det som regel er film som er blevet rated forkert
-        // kunne også have gjort dette i FilmService men valgte at gøre det her
-        //int deletedMovies2 = movieDAO.deleteMoviesWithRatingOver(9.0);
-        //System.out.println(BLUE+"Slettede film med en rating over 9.0: "+RESET + deletedMovies2);
+        private static void visAlleFilm(MovieDAO movieDAO) {
+        List<Movie> allMovies = movieDAO.getAllMovies();
+        System.out.println("\nAntal film i databasen: " + allMovies.size());
+        for (Movie movie : allMovies) {
+            printMovieDetails(movie);
+        }
+    }
 
-        // Her sletter jeg en film baseret på den angivne titel
-        movieDAO.deleteByTitle("Festen");
+    private static void visFilmEfterGenre(MovieDAO movieDAO, String genre) {
+        List<Movie> moviesByGenre = movieDAO.getMoviesByGenre(genre);
+        System.out.println("\nFilm med genren '" + genre + "':");
+        for (Movie movie : moviesByGenre) {
+            printMovieDetails(movie);
+        }
+    }
 
-        // Opret 'Festen' med Builder-metoden
+    private static void visFilmEfterRating(MovieDAO movieDAO, double rating) {
+        List<Movie> moviesByRating = movieDAO.getMoviesByRating(rating);
+        System.out.println("\nFilm med en rating over " + rating + ":");
+        for (Movie movie : moviesByRating) {
+            printMovieDetails(movie);
+        }
+    }
+
+    private static void tilfoejNyFilm(MovieDAO movieDAO, GenreDAO genreDAO, ActorDAO actorDAO, DirectorDAO directorDAO, Scanner scanner) {
+        System.out.println("Tilføj ny film:");
+
+        // Titel
+        System.out.print("Titel: ");
+        String title = scanner.nextLine();
+
+        // IMDB ID
+        System.out.print("IMDB ID: ");
+        long imdbId = scanner.nextLong();
+        scanner.nextLine();  // Capture the newline
+
+        // Udgivelsesdato
+        System.out.print("Udgivelsesdato (YYYY-MM-DD): ");
+        String releaseDate = scanner.nextLine();
+
+        // Varighed
+        System.out.print("Varighed i minutter: ");
+        int duration = scanner.nextInt();
+        scanner.nextLine();  // Capture the newline
+
+        // Vurdering
+        System.out.print("Vurdering (0-10): ");
+        double rating = scanner.nextDouble();
+        scanner.nextLine();  // Capture the newline
+
+        // Popularitet
+        System.out.print("Popularitet: ");
+        double popularity = scanner.nextDouble();
+        scanner.nextLine();  // Capture the newline
+
+        // Stemmer
+        System.out.print("Antal stemmer: ");
+        int voteCount = scanner.nextInt();
+        scanner.nextLine();  // Capture the newline
+
+        // Voksenfilm (true/false)
+        System.out.print("Er det en voksenfilm (true/false): ");
+        boolean adult = scanner.nextBoolean();
+        scanner.nextLine();  // Capture the newline
+
+        // Originalt sprog
+        System.out.print("Originalt sprog: ");
+        String originalLanguage = scanner.nextLine();
+
+        // Originaltitel
+        System.out.print("Originaltitel: ");
+        String originalTitle = scanner.nextLine();
+
+        // Oversigt
+        System.out.print("Kort beskrivelse (overview): ");
+        String overview = scanner.nextLine();
+
+        // Backdrop path
+        System.out.print("Sti til backdrop-billede: ");
+        String backdropPath = scanner.nextLine();
+
+        // Poster path
+        System.out.print("Sti til poster-billede: ");
+        String posterPath = scanner.nextLine();
+
+        // Director input
+        System.out.print("Instruktørens navn: ");
+        String directorName = scanner.nextLine();
+        Director director = directorDAO.findDirectorByName(directorName);
+        if (director == null) {
+            director = Director.builder()
+                    .name(directorName)
+                    .build();
+            directorDAO.create(director);
+        }
+
+        // Genre input
+        System.out.print("Genre (indtast genre-id'er adskilt med kommaer): ");
+        String genreInput = scanner.nextLine();
+        String[] genreIds = genreInput.split(",");
+        Set<Genre> genres = new HashSet<>();
+        for (String genreId : genreIds) {
+            Genre genre = genreDAO.findById(Long.parseLong(genreId.trim()));
+            if (genre != null) {
+                genres.add(genre);
+            }
+        }
+
+        // Skuespillere input
+        System.out.print("Skuespillere (indtast skuespiller-navne adskilt med kommaer): ");
+        String actorInput = scanner.nextLine();
+        String[] actorNames = actorInput.split(",");
+        Set<Actor> actors = new HashSet<>();
+        for (String actorName : actorNames) {
+            Actor actor = actorDAO.findByName(actorName.trim());
+            if (actor != null) {
+                actors.add(actor);
+            } else {
+                Actor newActor = Actor.builder()
+                        .name(actorName.trim())
+                        .build();
+                actorDAO.create(newActor);
+                actors.add(newActor);
+            }
+        }
+
         Movie newMovie = Movie.builder()
-                .imdbId(1234567L)
-                .title("Festen")
-                .duration(105)
-                .overview("Familie og venner er samlede for at fejre Helges 60 års fødselsdag. Under middagen holder den ældste søn en tale, der afslører en forfærdelig familiehemmelighed. I løbet af aftenen oprulles lag på lag af den grufulde fortid.")
-                .releaseDate("1998-08-21")
-                .voteAverage(8.0)
-                .voteCount(43000)
-                .popularity(32.432)
-                .originalLanguage("da")
-                .originalTitle("Festen")
-                .backdropPath("/path/to/backdrop.jpg")
-                .posterPath("/path/to/poster.jpg")
-                .adult(false)
-                .director(Director.builder()
-                        .name("Thomas Vinterberg")
-                        .build())
-                .genres(new HashSet<>() {{
-                    add(Genre.builder().genreId(18).name("Drama").build());
-                    add(Genre.builder().genreId(53).name("Thriller").build());
-                }})
-                .actors(new HashSet<>() {{
-                    add(Actor.builder().name("Ulrich Thomsen").build());
-                    add(Actor.builder().name("Henning Moritzen").build());
-                }})
+                .imdbId(imdbId)
+                .title(title)
+                .releaseDate(releaseDate)
+                .duration(duration)
+                .voteAverage(rating)
+                .voteCount(voteCount)
+                .popularity(popularity)
+                .originalLanguage(originalLanguage)
+                .originalTitle(originalTitle)
+                .overview(overview)
+                .backdropPath(backdropPath)
+                .posterPath(posterPath)
+                .adult(adult)
+                .director(director)
+                .genres(genres)
+                .actors(actors)
                 .build();
 
         try {
             movieDAO.createNewMovie(newMovie);
-            // Bekræftelse
-            System.out.println(BLUE+"Film der blev tilføjet til Databasen: "+RESET + newMovie.getTitle());
+            System.out.println("Film der blev tilføjet til databasen: " + newMovie.getTitle());
         } catch (Exception e) {
             System.err.println("Der opstod en fejl under tilføjelsen af filmen: " + e.getMessage());
         }
+    }
 
-        // Henter her film baseret på en angivet genre
-        //List<Movie> specificGenre = movieDAO.getMoviesByGenre("Drama");
-        //System.out.println("\nFilm med genren Drama tilknyttet:\n");
-        //for (Movie movie : specificGenre) {
-        //    printMovieDetails(movie);
-        //}
 
-        // Henter her film baseret på en angivet rating
-        //List<Movie> topRatedMovies = movieDAO.getMoviesByRating(8.0);
-        //System.out.println(BLUE+"\nFilm med en rating over 8.0:\n"+RESET);
-        //for (Movie movie : topRatedMovies) {
-        //    printMovieDetails(movie);
-        //}
+    private static void opdaterFilm(MovieDAO movieDAO, Scanner scanner) {
+        System.out.print("Indtast filmtitel for at opdatere: ");
+        String title = scanner.nextLine();
 
-        // Jeg henter her film baseret på det angivne udgivelsesår og på nationalitet
-        //List<Movie> movies2024 = movieDAO.getMoviesByReleaseYearAndNationality(2024, "da");
-        //System.out.println(BLUE+"\nFilm fra 2024:\n"+RESET);
-        //for (Movie movie : movies2024) {
-        //    printMovieDetails(movie);
-        //}
+        System.out.print("Ny titel: ");
+        String newTitle = scanner.nextLine();
 
-        // Jeg henter her alle skuespillere for en angivet filmtitel
-        List<Actor> actors = filmService.getActorsByMovieTitle("Retfærdighedens ryttere");
-        System.out.println(BLUE+"\nSkuespillere som optræder i 'Retfærdighedens ryttere':\n"+RESET);
-        for (Actor actor : actors) {
-            System.out.println("Actor: " + actor.getName());
-        }
-
-        // Henter her instruktøren for en angivet film
-        Director director = filmService.getDirectorByMovieTitle("Retfærdighedens ryttere");
-        System.out.println("\nInstruktøren af 'Retfærdighedens ryttere': " + (director != null ? director.getName() : "Ukendt"));
-
-        // Henter her alle film som en angivet skuespiller optræder i
-        List<Movie> movies = filmService.findMoviesByActor("Anders W. Berthelsen");
-        System.out.println(BLUE+"\nFilm som 'Anders W. Berthelsen' spiller med i:\n"+RESET);
-        for (Movie movie : movies) {
-            System.out.println("- "+movie.getTitle());
-        }
-        // En metode til at opdaterer release-datoen for en film
-        movieDAO.updateMovieReleaseDate("Retfærdighedens ryttere", "2020-11-01");
-
-        // En metode til at opdaterer titlen for en film
-        //movieDAO.updateMovieTitle("Retfærdighedens ryttere", "Retfærdighedens Ryttere");
-
-        // En metode til at søge efter film baseret på en del af titlen (case-insensitive)
-        List<Movie> moviesByTitle = movieDAO.searchMoviesByTitle("sandet");
-        System.out.println(BLUE+"\nFilm som indeholder 'sandet' i titlen:\n"+RESET);
-        moviesByTitle.forEach(Main::printMovieDetails);
-
-        // Her udregner jeg den gennemsnitlige rating for alle film i Databasen og udskriver den med en decimal
-        double averageRating = movieDAO.getTotalAverageRating();
-        System.out.printf("\nGennemsnitlig rating for alle film i Databasen: %.1f%n", averageRating);
-
-        // Få titlerne på de top-10 laveste ratede film
-        List<Movie> lowestRatedMovies = movieDAO.getTop10LowestRatedMovies();
-        System.out.println(BLUE+"\nTop 10 laveste ratede film:\n"+RESET);
-        for (Movie movie : lowestRatedMovies) {
-            System.out.println("- "+movie.getTitle() + " - Rating: " + movie.getVoteAverage());
-        }
-
-        // Få titlerne på de top-10 højeste ratede film
-        List<Movie> highestRatedMovies = movieDAO.getTop10HighestRatedMovies();
-        System.out.println(BLUE+"\nTop 10 højeste ratede film:\n"+RESET);
-        for (Movie movie : highestRatedMovies) {
-            System.out.println("- "+movie.getTitle() + " - Rating: " + movie.getVoteAverage());
-        }
-
-        // Få titlerne på de top-10 mest populære film
-        List<Movie> mostPopularMovies = movieDAO.getTop10MostPopularMovies();
-        System.out.println(BLUE+"\nTop 10 mest populære film:\n"+RESET);
-        for (Movie movie : mostPopularMovies) {
-            System.out.println("- "+movie.getTitle() + " - Popularitet: " + movie.getPopularity());
-        }
+        movieDAO.updateMovieTitle(title, newTitle);
+        System.out.println("Filmen '" + title + "' blev opdateret til '" + newTitle + "'.");
     }
 
     private static void printMovieDetails(Movie movie) {
         System.out.println(RED + "Title: " + WHITE + movie.getTitle() + RESET);
+
+        // Spilletid
         if (movie.getDuration() > 0) {
             System.out.println(RED + "Spilletid: " + WHITE + movie.getDuration() + " minutter" + RESET);
         } else {
             System.out.println(RED + "Spilletid: " + WHITE + "Ukendt" + RESET);
         }
+
+        // Udgivelsesdato
         System.out.println(RED + "Udgivelsesdato: " + WHITE + movie.getReleaseDate() + RESET);
+
+        // Rating
         System.out.printf(RED + "Rating på IMDB: " + WHITE + "%.1f%n" + RESET, movie.getVoteAverage());
+
+        // Genrer
         System.out.print(RED + "Genrer: " + WHITE);
         Set<Genre> genre = movie.getGenres();
         if (genre != null && !genre.isEmpty()) {
@@ -194,11 +366,15 @@ public class Main {
         } else {
             System.out.println("Ingen genre tilknyttet" + RESET);
         }
-        if (movie.getDirector().getName() != null) {
+
+        // Instruktør
+        if (movie.getDirector() != null && movie.getDirector().getName() != null) {
             System.out.println(RED + "Instruktør: " + WHITE + movie.getDirector().getName() + RESET);
         } else {
             System.out.println(RED + "Instruktør: " + WHITE + "Ukendt" + RESET);
         }
+
+        // Skuespillere
         System.out.print(RED + "Skuespiller: " + WHITE);
         Set<Actor> actors = movie.getActors();
         if (actors != null && !actors.isEmpty()) {
@@ -209,13 +385,15 @@ public class Main {
             System.out.println("Ingen skuespillere tilknyttet" + RESET);
         }
 
+        // Handling
         String overview = movie.getOverview();
-        if (overview == null || overview.length() < 11) {
-            printWrappedText(RED + "Handling : " + WHITE + "ingen handling angivet" + RESET);
+        if (overview == null || overview.isEmpty()) {
+            printWrappedText(RED + "Handling: " + WHITE + "Ingen handling angivet" + RESET);
         } else {
-            printWrappedText(RED + "Handling : " + WHITE + overview + RESET);
+            printWrappedText(RED + "Handling: " + WHITE + overview + RESET);
         }
 
+        // Afslutning af film detaljer
         System.out.println("----------------------------------------------------------------------------------------------------------------------");
     }
 
@@ -228,8 +406,8 @@ public class Main {
 
         StringTokenizer tokenizer = new StringTokenizer(text, " ");
         StringBuilder line = new StringBuilder();
-        // Så længe der er flere ord i teksten så fortsætter vi med at bygge linjen
-        // og udskrive den når den er fyldt med maks bredde som jeg har sat til 160
+        // Så længe der er flere ord i teksten, fortsætter vi med at bygge linjen
+        // og udskriver den, når den er fyldt med maks bredde på 160
         while (tokenizer.hasMoreTokens()) {
             String word = tokenizer.nextToken();
             if (line.length() + word.length() + 1 > Main.LINE_WIDTH) {
@@ -241,9 +419,10 @@ public class Main {
             }
             line.append(word);
         }
-        // Her udskriver jeg den sidste linje hvis der er noget tekst tilbage
+        // Her udskrives den sidste linje, hvis der er noget tekst tilbage
         if (!line.isEmpty()) {
             System.out.println(line);
         }
     }
+
 }

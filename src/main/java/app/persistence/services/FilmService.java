@@ -161,7 +161,7 @@ public class FilmService {
         EntityManager em = emf.createEntityManager();
         List<Actor> actors;
         try {
-            String jpql = "SELECT a FROM Actor a JOIN a.movies m WHERE m.title = :title";
+            String jpql = "SELECT a FROM Actor a JOIN a.movies m WHERE m.originalTitle = :title";
             TypedQuery<Actor> query = em.createQuery(jpql, Actor.class);
             query.setParameter("title", title);
             actors = query.getResultList();
@@ -178,7 +178,7 @@ public class FilmService {
         EntityManager em = emf.createEntityManager();
         Director director;
         try {
-            String jpql = "SELECT m.director FROM Movie m WHERE m.title = :title";
+            String jpql = "SELECT m.director FROM Movie m WHERE m.originalTitle = :title";
             TypedQuery<Director> query = em.createQuery(jpql, Director.class);
             query.setParameter("title", title);
             director = query.getResultStream().findFirst().orElse(null);

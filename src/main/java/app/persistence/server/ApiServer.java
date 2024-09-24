@@ -8,6 +8,8 @@ import app.persistence.services.MovieConverter;
 import app.persistence.utility.JsonUtil;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.javalin.Javalin;
+import java.net.URLDecoder;
+import java.nio.charset.StandardCharsets;
 import java.time.LocalDate;
 import java.time.format.DateTimeParseException;
 import java.util.Comparator;
@@ -28,30 +30,26 @@ public class ApiServer {
 
         app.get("/moviesbyinstructor/{instructor}", ctx -> {
             try {
-                // Hent instruktørens navn fra URL-parameteren
-                String instructorName = ctx.pathParam("instructor");
+                String instructorName = URLDecoder.decode(ctx.pathParam("instructor"), StandardCharsets.UTF_8);
 
                 // Hent listen af film baseret på instruktørens navn
                 List<Movie> moviesOfInstructor = movieDAO.getMoviesByDirector(instructorName);
 
-                // Her tjekker jeg om der findes nogle film instrueret af den angivne instruktør
                 if (moviesOfInstructor.isEmpty()) {
-                    // Hvis der ikke findes nogen film, returnér 404 og en besked
-                    ctx.status(404).result("Ingen film fundet instrueret af instruktøren: " + instructorName);
+                    ctx.status(404).result("Ingen film fundet instrueret af: " + instructorName);
                 } else {
-                    // Hvis der findes film, konverter dem til JSON og returnér som svar
-                    // Konverter listen af Movie-objekter til en liste af MovieAPI-objekter
+                    // Her sorterer jeg listen af film efter releaseDate i stigende rækkefølge
+                    moviesOfInstructor.sort(Comparator.comparing(Movie::getReleaseDate));
+
                     List<MovieAPI> movieAPIS = moviesOfInstructor.stream()
                             .map(MovieConverter::convertToMovieAPI)
                             .toList();
 
-                    // Her konverterer jeg listen af MovieAPIs til JSON og returnérer den
                     String jsonResponse = jsonUtil.convertListOfMoviesToJson(movieAPIS);
                     ctx.contentType("application/json");
                     ctx.result(jsonResponse);
                 }
             } catch (Exception e) {
-                // Hvis der opstår en fejl, returnér en 500 status og en fejlbesked
                 ctx.status(500).result("Fejl ved konvertering af film til JSON: " + e.getMessage());
             }
         });

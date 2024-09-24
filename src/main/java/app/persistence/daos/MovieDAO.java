@@ -100,12 +100,12 @@ public class MovieDAO {
             EntityTransaction transaction = em.getTransaction();
             try {
                 transaction.begin();
-                Movie movie = em.createQuery("SELECT m FROM Movie m WHERE m.title = :title", Movie.class)
+                Movie movie = em.createQuery("SELECT m FROM Movie m WHERE m.originalTitle = :title", Movie.class)
                         .setParameter("title", title)
                         .getSingleResult();
 
                 if (movie != null) {
-                    movie.setTitle(newTitle);
+                    movie.setOriginalTitle(newTitle);
                     em.merge(movie);
                     transaction.commit();
                     System.out.println("Filmen " + title + " er opdateret med en ny titel: " + newTitle);
@@ -114,7 +114,7 @@ public class MovieDAO {
                 if (transaction.isActive()) {
                     transaction.rollback();
                 }
-                throw new JpaException("Fejl ved opdatering af titel for filmen "+title, e);
+                throw new JpaException("Fejl ved opdatering af titlen for filmen "+title, e);
             }
         }
     }
@@ -191,6 +191,8 @@ public class MovieDAO {
         }
         return deleted;
     }
+    
+    // En metode til at slette film med en rating over et givet tal. Bruger den til at rense ud i Movies tabellen
     public int deleteMoviesWithRatingOver(double rating) {
         int deleted = 0;
         try (EntityManager em = emf.createEntityManager()) {
@@ -229,8 +231,10 @@ public class MovieDAO {
     public List<Movie> searchMoviesByTitle(String searchString) {
         try (EntityManager em = emf.createEntityManager()) {
             // Lav søgningen case-insensitive med LOWER() og brug LIKE til delmatch
-            return em.createQuery("SELECT m FROM Movie m WHERE LOWER(m.title) LIKE LOWER(:searchString)", Movie.class)
-                    .setParameter("searchString", "%" + searchString + "%")  // Brug '%' til at matche delstrenge
+            return em.createQuery("SELECT m FROM Movie m WHERE LOWER(m.originalTitle) LIKE LOWER(:searchString) ORDER BY m.releaseDate ASC", Movie.class)
+
+                    // Bruger her '%' til at matche delstrenge
+                    .setParameter("searchString", "%" + searchString + "%")
                     .getResultList();
         }
     }
@@ -297,7 +301,7 @@ public class MovieDAO {
         try (EntityManager em = emf.createEntityManager()) {
             em.getTransaction().begin();
 
-            TypedQuery<Movie> query = em.createQuery("SELECT m FROM Movie m WHERE m.title = :title", Movie.class);
+            TypedQuery<Movie> query = em.createQuery("SELECT m FROM Movie m WHERE m.originalTitle = :title", Movie.class);
             query.setParameter("title", title);
             Movie movie = query.getResultStream().findFirst().orElse(null);
 
@@ -306,7 +310,7 @@ public class MovieDAO {
                 em.merge(movie);
                 em.getTransaction().commit();
 
-                System.out.println("Filmen " + movie.getTitle() + " er opdateret med ny release-dato: " + newReleaseDate);
+                System.out.println("\nFilmen " + movie.getTitle() + " er opdateret med ny release-dato: " + newReleaseDate);
             } else {
                 System.out.println("Ingen film fundet med titlen: " + title);
                 em.getTransaction().rollback();
@@ -523,7 +527,7 @@ public class MovieDAO {
 
     public List<Movie> getAllMovies() {
         try (EntityManager em = emf.createEntityManager()) {
-            TypedQuery<Movie> query = em.createQuery("SELECT m FROM Movie m", Movie.class);
+            TypedQuery<Movie> query = em.createQuery("SELECT m FROM Movie m ORDER BY m.releaseDate ASC", Movie.class);
             return query.getResultList();
         }
     }
@@ -546,7 +550,7 @@ public class MovieDAO {
 
     public List<Movie> getMoviesByGenre(String genreName) {
         try {
-            String jpql = "SELECT m FROM Movie m JOIN m.genres g WHERE g.name = :genreName";
+            String jpql = "SELECT m FROM Movie m JOIN m.genres g WHERE g.name = :genreName ORDER BY m.releaseDate ASC";
             TypedQuery<Movie> query = em.createQuery(jpql, Movie.class);
             query.setParameter("genreName", genreName);
             return query.getResultList();
@@ -563,6 +567,7 @@ public class MovieDAO {
             String jpql = "SELECT m FROM Movie m JOIN m.genres g WHERE g.name = :genreName";
             TypedQuery<Movie> query = em.createQuery(jpql, Movie.class);
             query.setParameter("genreName", genreName);
+            // Her sætter jeg firstresult for at angive hvilken side jeg vil have og maxresults for at angive hvor mange jeg vil have
             query.setFirstResult(page * size);
             query.setMaxResults(size);
             return query.getResultList();
@@ -572,7 +577,7 @@ public class MovieDAO {
     }
 
     public List<Movie> getMoviesByRating(double rating) {
-        String jpql = "SELECT m FROM Movie m WHERE m.voteAverage >= :rating";
+        String jpql = "SELECT m FROM Movie m WHERE m.voteAverage >= :rating ORDER BY m.releaseDate ASC";
         TypedQuery<Movie> query = em.createQuery(jpql, Movie.class);
         query.setParameter("rating", rating);
         return query.getResultList();
@@ -599,7 +604,7 @@ public class MovieDAO {
         endOfYear = endOfYear + " 23:59:59";
 
         //String jpql = "SELECT m FROM Movie m WHERE m.releaseDate BETWEEN :startOfYear AND :endOfYear";
-        String jpql = "SELECT m FROM Movie m WHERE m.releaseDate BETWEEN :startOfYear AND :endOfYear AND m.originalLanguage = :languageCode";
+        String jpql = "SELECT m FROM Movie m WHERE m.releaseDate BETWEEN :startOfYear AND :endOfYear AND m.originalLanguage = :languageCode ORDER BY m.releaseDate ASC";
         TypedQuery<Movie> query = em.createQuery(jpql, Movie.class);
         query.setParameter("startOfYear", startOfYear);
         query.setParameter("endOfYear", endOfYear);
@@ -630,7 +635,7 @@ public class MovieDAO {
         EntityManager em = emf.createEntityManager();
         List<Movie> movies;
         try {
-            TypedQuery<Movie> query = em.createQuery("SELECT m FROM Movie m WHERE m.director.name = :directorName", Movie.class);
+            TypedQuery<Movie> query = em.createQuery("SELECT m FROM Movie m WHERE m.director.name = :directorName ORDER BY m.releaseDate ASC", Movie.class);
             query.setParameter("directorName", directorName);
             movies = query.getResultList();
         } catch (Exception e) {
@@ -676,7 +681,7 @@ public class MovieDAO {
         List<Movie> movies;
         try(EntityManager em = emf.createEntityManager()) {
             TypedQuery<Movie> query = em.createQuery(
-                    "SELECT m FROM Movie m JOIN m.actors a WHERE a.name = :actorName", Movie.class);
+                    "SELECT m FROM Movie m JOIN m.actors a WHERE a.name = :actorName ORDER BY m.releaseDate ASC", Movie.class);
             query.setParameter("actorName", actorName);
             movies = query.getResultList();
         } catch (Exception e) {

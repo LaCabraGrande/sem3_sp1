@@ -27,50 +27,53 @@ public class FilmFetcher {
     private static final Logger LOGGER = Logger.getLogger(FilmFetcher.class.getName());
     private static final String API_KEY = System.getenv("API_KEY");
     private static final LocalDate today = LocalDate.now();
-    private static final LocalDate startDate = today.minusYears(5);
-    private static final LocalDate secondStartDate = today.minusMonths(13);
-    private static final LocalDate thirdStartDate = today.minusDays(7);
     private static final String BASE_API_URL = "https://api.themoviedb.org/3/discover/movie";
-    private static final String BASE_API_URL_OLD = "https://api.themoviedb.org/3/discover/movie?api_key=" + API_KEY + "&language=da-DK&sort_by=popularity.desc&with_original_language=da&page=";
+    private static final LocalDate fiftyYearsAgo = today.minusYears(50);
+    private static final LocalDate fiveYearsAgo = today.minusYears(5);
+    private static final LocalDate sevenMonthsAgo = today.minusDays(7);
 
-    private static final String BASE_API_URL_DANISH_MOVIES_SPECIFIC_PERIOD = BASE_API_URL
-            + "?api_key="
-            + API_KEY
-            + "&language=da-DK"
-            + "&with_original_language=da"
-            + "&primary_release_date.gte="
-            + startDate
-            + "&primary_release_date.lte="
-            + today
-            + "&sort_by=popularity.desc"
-            + "&page=";
-
-    private static final String BASE_API_URL_ALL_DANISH_MOVIES = BASE_API_URL
-            + "?api_key="
-            + API_KEY
-            + "&language=da-DK"
-            + "&with_original_language=da"
-            + "&sort_by=popularity.desc"
-            + "&page=";
-
+    // URL for at hente alle film fra The Movie Database API fra en bestemt periode
     private static final String BASE_API_URL_ALL_NATIONALITIES = BASE_API_URL
-            + "?api_key="
-            + API_KEY
+            + "?api_key=" + API_KEY
             + "&without_genres=99"
             + "&with_runtime.gte=60"
             + "&vote_average.gte=5"
             + "&with_poster=true"
-            + "&primary_release_date.gte="
-            + secondStartDate
-            + "&primary_release_date.lte="
-            + today
+            + "&primary_release_date.gte=" + sevenMonthsAgo
+            + "&primary_release_date.lte=" + today
             + "&page=";
 
-    private static final String BASE_API_URL_DANISH_MOVIES_LAST_5_YEARS = BASE_API_URL
+    // URL for at hente alle danske film fra The Movie Database API
+    private static final String BASE_API_URL_ALL_DANISH_MOVIES = BASE_API_URL
+            + "?api_key=" + API_KEY
+            + "&with_origin_country=DK"
+            + "&sort_by=popularity.desc"
+            + "&page=";
+
+    // URL for at hente danske film fra The Movie Database API fra en bestemt periode
+    private static final String BASE_API_URL_DANISH_MOVIES_SPECIFIC_PERIOD = BASE_API_URL
+            + "?api_key=" + API_KEY
+            + "&with_origin_country=DK"
+            + "&primary_release_date.gte=" + fiftyYearsAgo
+            + "&primary_release_date.lte=" + today
+            + "&sort_by=popularity.desc"
+            + "&page=";
+
+    //URL for at hente alle danske film fra The Movie Database API fra de sidste 5 år med med dansk tale
+    private static final String BASE_API_URL_DANISH_MOVIES_LAST_5_YEARS_WITH_DANISH_SPEECH = BASE_API_URL
             + "?api_key=" + API_KEY
             + "&language=da-DK"
             + "&with_original_language=da"
-            + "&primary_release_date.gte=" + startDate
+            + "&primary_release_date.gte=" + fiveYearsAgo
+            + "&primary_release_date.lte=" + today
+            + "&sort_by=popularity.desc"
+            + "&page=";
+
+    //URL for at hente alle danske film fra The Movie Database API fra de sidste 5 år med Danmark som oprindelsesland
+    private static final String BASE_API_URL_DANISH_MOVIES_RELEASED_LAST_5_YEARS = BASE_API_URL
+            + "?api_key=" + API_KEY
+            + "&with_origin_country=DK"
+            + "&primary_release_date.gte=" + fiveYearsAgo
             + "&primary_release_date.lte=" + today
             + "&sort_by=popularity.desc"
             + "&page=";
@@ -95,11 +98,11 @@ public class FilmFetcher {
         List<Future<List<MovieDTO>>> futures = new ArrayList<>();
 
         while (hasMorePages) {
-            String apiUrl1 = BASE_API_URL_DANISH_MOVIES_SPECIFIC_PERIOD + page;
+            String apiUrl1 = BASE_API_URL_ALL_NATIONALITIES + page;
             String apiUrl2 = BASE_API_URL_ALL_DANISH_MOVIES + page;
-            String apiUrl3 = BASE_API_URL_ALL_NATIONALITIES + page;
-            String apiUrl4 = BASE_API_URL_OLD + page;
-            String apiUrl5 = BASE_API_URL_DANISH_MOVIES_LAST_5_YEARS + page;
+            String apiUrl3 = BASE_API_URL_DANISH_MOVIES_SPECIFIC_PERIOD + page;
+            String apiUrl4 = BASE_API_URL_DANISH_MOVIES_LAST_5_YEARS_WITH_DANISH_SPEECH + page;
+            String apiUrl5 = BASE_API_URL_DANISH_MOVIES_RELEASED_LAST_5_YEARS + page;
             LOGGER.info("Fetching URL: " + apiUrl5);
 
             Future<List<MovieDTO>> future = executorService.submit(() -> {
@@ -159,9 +162,9 @@ public class FilmFetcher {
         String firstPageUrl1 = BASE_API_URL_ALL_NATIONALITIES + "1";
         String firstPageUrl2 = BASE_API_URL_ALL_DANISH_MOVIES + "1";
         String firstPageUrl3 = BASE_API_URL_DANISH_MOVIES_SPECIFIC_PERIOD + "1";
-        String firstPageUrl4 = BASE_API_URL_DANISH_MOVIES_LAST_5_YEARS + "1";
-        String firstPageUrl5 = BASE_API_URL_OLD + "1";
-        String jsonResponse = fetchApiResponse(firstPageUrl4);
+        String firstPageUrl4 = BASE_API_URL_DANISH_MOVIES_LAST_5_YEARS_WITH_DANISH_SPEECH + "1";
+        String firstPageUrl5 = BASE_API_URL_DANISH_MOVIES_RELEASED_LAST_5_YEARS + "1";
+        String jsonResponse = fetchApiResponse(firstPageUrl5);
         JsonNode rootNode = objectMapper.readTree(jsonResponse);
         return rootNode.path("total_pages").asInt();
     }
