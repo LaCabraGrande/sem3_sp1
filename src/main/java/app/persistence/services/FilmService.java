@@ -140,7 +140,6 @@ public class FilmService {
                     }
                 }
             }
-
             em.getTransaction().commit();
         } catch (Exception e) {
             System.err.println("Der opstod en fejl ved behandling af skuespillere: " + e.getMessage());
@@ -206,5 +205,13 @@ public class FilmService {
             em.close();
         }
         return movies;
+    }
+    // Returnerer en liste af film instrueret af en angiven instruktør
+    public List<Movie> getMoviesByDirector(String directorName) throws Exception {
+        try {
+            return movieDAO.getMoviesByDirector(directorName);
+        } catch (Exception e) {
+            throw new Exception("Fejl ved hentning af film: " + e.getMessage());
+        }
     }
 }

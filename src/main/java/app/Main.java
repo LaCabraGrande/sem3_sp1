@@ -11,6 +11,7 @@ import app.persistence.entities.Movie;
 import app.persistence.enums.HibernateConfigState;
 import app.persistence.fetcher.FilmFetcher;
 import app.persistence.services.FilmService;
+import app.persistence.services.MovieService;
 import jakarta.persistence.EntityManagerFactory;
 import app.persistence.config.HibernateConfig;
 
@@ -19,19 +20,20 @@ import java.util.stream.Collectors;
 
 public class Main {
     static final int LINE_WIDTH = 160;
-    static EntityManagerFactory emf = HibernateConfig.getEntityManagerFactoryConfig(HibernateConfigState.NORMAL, "movie");
+    static EntityManagerFactory emf = HibernateConfig.getEntityManagerFactoryConfig(HibernateConfigState.NORMAL, "moviedb");
     private static final String RED = "\u001B[31m";
     private static final String BLUE = "\u001B[34m";
     private static final String WHITE = "\u001B[39m";
     private static final String RESET = "\u001B[0m";
 
-    public static void main(String[] args) {
+    public static void main(String[] args) throws Exception {
         MovieDAO movieDAO = MovieDAO.getInstance(HibernateConfigState.NORMAL);
         GenreDAO genreDAO = GenreDAO.getInstance(HibernateConfigState.NORMAL);
         ActorDAO actorDAO = ActorDAO.getInstance(HibernateConfigState.NORMAL);
         DirectorDAO directorDAO = DirectorDAO.getInstance(HibernateConfigState.NORMAL);
         FilmFetcher filmFetcher = new FilmFetcher(genreDAO);
         FilmService filmService = new FilmService(filmFetcher, movieDAO, genreDAO, actorDAO, directorDAO, emf);
+        MovieService movieService = new MovieService(movieDAO);
         Scanner scanner = new Scanner(System.in);
         if (movieDAO.getAllMovies().isEmpty()) {
             filmFetcher.populateGenres();
@@ -43,7 +45,7 @@ public class Main {
         scanner.close();
     }
 
-    private static void showMenu(MovieDAO movieDAO, GenreDAO genreDAO, ActorDAO actorDAO, DirectorDAO directorDAO, FilmService filmService, Scanner scanner) {
+    private static void showMenu(MovieDAO movieDAO, GenreDAO genreDAO, ActorDAO actorDAO, DirectorDAO directorDAO, FilmService filmService, Scanner scanner) throws Exception {
         int choice;
         do {
             System.out.println(BLUE + "\n--- Menu ---" + RESET);
@@ -53,13 +55,14 @@ public class Main {
             System.out.println("4. Hent skuespillere for en film");
             System.out.println("5. Hent instruktør for en film");
             System.out.println("6. Hent film af en skuespiller");
-            System.out.println("7. Opdater udgivelsesdato for en film");
-            System.out.println("8. Opdater titel for en film");
-            System.out.println("9. Søg efter film baseret på titel");
-            System.out.println("10. Vis gennemsnitlig rating for alle film");
-            System.out.println("11. Vis top 10 laveste ratede film");
-            System.out.println("12. Vis top 10 højeste ratede film");
-            System.out.println("13. Vis top 10 mest populære film");
+            System.out.println("7. Hent film af en instruktør");
+            System.out.println("8. Opdater udgivelsesdato for en film");
+            System.out.println("9. Opdater titel for en film");
+            System.out.println("10. Søg efter film baseret på titel");
+            System.out.println("11. Vis gennemsnitlig rating for alle film");
+            System.out.println("12. Vis top 10 laveste ratede film");
+            System.out.println("13. Vis top 10 højeste ratede film");
+            System.out.println("14. Vis top 10 mest populære film");
             System.out.println("0. Afslut");
             System.out.print("Vælg en handling: ");
             choice = scanner.nextInt();
@@ -117,6 +120,15 @@ public class Main {
                     }
                     break;
                 case 7:
+                    System.out.print("Indtast navn på instruktør for at finde deres film: ");
+                    String directorName = scanner.nextLine();
+                    List<Movie> moviesByDirector = filmService.getMoviesByDirector(directorName);
+                    System.out.println(BLUE + "\nFilm som '" + directorName + "' har instrueret:\n" + RESET);
+                    for (Movie movie : moviesByDirector) {
+                        System.out.println("- " + movie.getOriginalTitle());
+                    }
+                    break;
+                case 8:
                     System.out.print("Indtast filmtitel for at opdatere udgivelsesdato: ");
                     String updateTitleDate = scanner.nextLine();
                     System.out.print("Indtast ny udgivelsesdato (YYYY-MM-DD): ");
@@ -124,7 +136,7 @@ public class Main {
                     movieDAO.updateMovieReleaseDate(updateTitleDate, newReleaseDate);
                     System.out.println("Udgivelsesdato opdateret for '" + updateTitleDate + "'.");
                     break;
-                case 8:
+                case 9:
                     System.out.print("Indtast filmtitel for at opdatere titel: ");
                     String updateTitleOld = scanner.nextLine();
                     System.out.print("Indtast ny titel: ");
@@ -132,32 +144,32 @@ public class Main {
                     movieDAO.updateMovieTitle(updateTitleOld, newTitle);
                     System.out.println("Titel opdateret for '" + updateTitleOld + "'.");
                     break;
-                case 9:
+                case 10:
                     System.out.print("Indtast del af titlen for at søge: ");
                     String searchTitle = scanner.nextLine();
                     List<Movie> moviesByTitle = movieDAO.searchMoviesByTitle(searchTitle);
                     System.out.println(BLUE + "\nFilm som indeholder '" + searchTitle + "' i titlen:\n" + RESET);
                     moviesByTitle.forEach(Main::printMovieDetails);
                     break;
-                case 10:
+                case 110:
                     double averageRating = movieDAO.getTotalAverageRating();
                     System.out.printf("\nGennemsnitlig rating for alle film i Databasen: %.1f%n", averageRating);
                     break;
-                case 11:
+                case 12:
                     List<Movie> lowestRatedMovies = movieDAO.getTop10LowestRatedMovies();
                     System.out.println(BLUE + "\nTop 10 laveste ratede film:\n" + RESET);
                     for (Movie movie : lowestRatedMovies) {
                         System.out.println("- " + movie.getOriginalTitle() + " - Rating: " + movie.getVoteAverage());
                     }
                     break;
-                case 12:
+                case 13:
                     List<Movie> highestRatedMovies = movieDAO.getTop10HighestRatedMovies();
                     System.out.println(BLUE + "\nTop 10 højeste ratede film:\n" + RESET);
                     for (Movie movie : highestRatedMovies) {
                         System.out.println("- " + movie.getOriginalTitle() + " - Rating: " + movie.getVoteAverage());
                     }
                     break;
-                case 13:
+                case 14:
                     List<Movie> mostPopularMovies = movieDAO.getTop10MostPopularMovies();
                     System.out.println(BLUE + "\nTop 10 mest populære film:\n" + RESET);
                     for (Movie movie : mostPopularMovies) {

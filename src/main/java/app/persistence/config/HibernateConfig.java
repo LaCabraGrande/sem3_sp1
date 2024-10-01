@@ -40,10 +40,13 @@ public class HibernateConfig {
         try {
             Configuration configuration = new Configuration();
             Properties props = new Properties();
-            String connctionURL = String.format("jdbc:postgresql://localhost:5432/%s?currentSchema=public", dbName);
+            String username = System.getenv("DB_USERNAME");
+            String password = System.getenv("DB_PASSWORD");
+            //String connctionURL = String.format("jdbc:postgresql://localhost:5432/%s?currentSchema=public", dbName);
+            String connctionURL = String.format("jdbc:postgresql://161.35.204.41:5433/%s?currentSchema=public", dbName);
             props.put("hibernate.connection.url", connctionURL);
-            props.put("hibernate.connection.username", "postgres");
-            props.put("hibernate.connection.password", "postgres");
+            props.put("hibernate.connection.username", username);
+            props.put("hibernate.connection.password", password);
 //            props.put("hibernate.show_sql", "false"); // show sql in console
 //            props.put("hibernate.format_sql", "false"); // format sql in console
 //            props.put("hibernate.use_sql_comments", "false"); // show sql comments in console

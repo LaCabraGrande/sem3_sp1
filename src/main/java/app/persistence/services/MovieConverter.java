@@ -1,8 +1,6 @@
 package app.persistence.services;
 
-import app.persistence.dtos.MovieDTO;
 import app.persistence.entities.Movie;
-
 import java.util.stream.Collectors;
 import app.persistence.apis.MovieAPI;
 import app.persistence.entities.Actor;

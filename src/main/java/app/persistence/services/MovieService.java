@@ -3,7 +3,6 @@ package app.persistence.services;
 import app.persistence.daos.MovieDAO;
 import app.persistence.entities.Movie;
 import com.fasterxml.jackson.databind.ObjectMapper;
-
 import java.util.List;
 import java.util.stream.Collectors;
 import app.persistence.apis.MovieAPI;
@@ -54,4 +53,6 @@ public class MovieService {
             throw new Exception("Fejl ved konvertering til JSON: " + e.getMessage());
         }
     }
+
+
 }

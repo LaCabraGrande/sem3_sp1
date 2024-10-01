@@ -153,12 +153,6 @@ public class DirectorDAO {
         }
     }
 
-
-
-
-
-
-
     public void delete(Long id) {
         EntityManager em = emf.createEntityManager();
         EntityTransaction transaction = em.getTransaction();
@@ -178,9 +172,6 @@ public class DirectorDAO {
             em.close();
         }
     }
-
-
-
 
     public List<DirectorDTO> getAll() {
         EntityManager em = emf.createEntityManager();

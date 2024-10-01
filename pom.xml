@@ -18,6 +18,7 @@
         <testcontainers.version>1.20.0</testcontainers.version>
         <slf4j.version>2.0.16</slf4j.version>
         <jackson.version>2.15.0</jackson.version>
+        <apache.version>1.27.1</apache.version>
     </properties>
 
     <dependencies>
@@ -97,6 +98,14 @@
             <scope>test</scope>
         </dependency>
 
+        <!-- APACHE COMMONS COMPRESS -->
+
+        <dependency>
+            <groupId>org.apache.commons</groupId>
+            <artifactId>commons-compress</artifactId>
+            <version>${apache.version}</version>
+        </dependency>
+
         <!-- Test Containers -->
         <dependency>
             <groupId>org.testcontainers</groupId>
@@ -135,5 +144,60 @@
             <version>20210307</version> <!-- Brug den nyeste version -->
         </dependency>
     </dependencies>
-
+    <build>
+        <finalName>app</finalName> <!-- This is the name of the jar file -->
+        <plugins>
+            <plugin>
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>properties-maven-plugin</artifactId>
+                <version>1.0.0</version>
+                <executions>
+                    <execution>
+                        <phase>generate-resources</phase>
+                        <goals>
+                            <goal>write-project-properties</goal>
+                        </goals>
+                        <configuration>
+                            <outputFile>${project.build.outputDirectory}/properties-from-pom.properties</outputFile>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-surefire-plugin</artifactId>
+                <version>3.0.0</version>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-shade-plugin</artifactId>
+                <version>3.4.1</version>
+                <configuration>
+                    <transformers>
+                        <transformer implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
+                            <mainClass>app.Main</mainClass> <!-- Opdateret til at bruge Main-klassen -->
+                        </transformer>
+                    </transformers>
+                    <filters>
+                        <filter>
+                            <artifact>*:*</artifact>
+                            <excludes>
+                                <exclude>META-INF/*.SF</exclude>
+                                <exclude>META-INF/*.DSA</exclude>
+                                <exclude>META-INF/*.RSA</exclude>
+                            </excludes>
+                        </filter>
+                    </filters>
+                </configuration>
+                <executions>
+                    <execution>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>shade</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+        </plugins>
+    </build>
 </project>

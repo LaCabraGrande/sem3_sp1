@@ -12,6 +12,7 @@ import jakarta.persistence.*;
 import app.persistence.config.HibernateConfig;
 import app.persistence.enums.HibernateConfigState;
 import java.util.*;
+import java.util.stream.Collectors;
 
 public class MovieDAO {
 
@@ -690,4 +691,6 @@ public class MovieDAO {
         }
         return movies;
     }
+
+
 }
