@@ -7,7 +7,6 @@ import app.persistence.entities.Actor;
 import app.persistence.entities.Director;
 import app.persistence.entities.Genre;
 import app.persistence.entities.Movie;
-import app.persistence.enums.HibernateConfigState;
 import org.junit.jupiter.api.*;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.EntityManagerFactory;
@@ -27,14 +26,14 @@ class MovieDAOTest {
 
     @BeforeAll
     void setUp() {
-        emf = HibernateConfig.getEntityManagerFactoryConfig(HibernateConfigState.TEST, "movie");
-        movieDAO = MovieDAO.getInstance(HibernateConfigState.TEST);
+        emf = HibernateConfig.getEntityManagerFactoryForTest();
+        movieDAO = new MovieDAO(emf);
         em = emf.createEntityManager();
     }
 
     @AfterAll
     void tearDown() {
-        MovieDAO.close();
+
         if (em != null && em.isOpen()) {
             em.close();
         }

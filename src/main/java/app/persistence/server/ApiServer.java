@@ -1,13 +1,15 @@
 package app.persistence.server;
 
 import app.persistence.apis.MovieAPI;
+import app.persistence.config.HibernateConfig;
 import app.persistence.daos.MovieDAO;
 import app.persistence.entities.Movie;
-import app.persistence.enums.HibernateConfigState;
 import app.persistence.services.MovieConverter;
 import app.persistence.utility.JsonUtil;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.javalin.Javalin;
+import jakarta.persistence.EntityManagerFactory;
+
 import java.net.URLDecoder;
 import java.nio.charset.StandardCharsets;
 import java.time.LocalDate;
@@ -16,11 +18,11 @@ import java.util.Comparator;
 import java.util.List;
 
 public class ApiServer {
-
+    private static final EntityManagerFactory emf = HibernateConfig.getEntityManagerFactory("moviedb");
     public static void main(String[] args) {
         // Initialisering af DAO
         JsonUtil jsonUtil = new JsonUtil();
-        MovieDAO movieDAO = MovieDAO.getInstance(HibernateConfigState.NORMAL);
+        MovieDAO movieDAO = new MovieDAO(emf);
 
         // Her opretter jeg en ObjectMapper som jeg bruger til at serialisere data til JSON
         ObjectMapper mapper = new ObjectMapper();

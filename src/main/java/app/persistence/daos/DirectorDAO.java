@@ -1,10 +1,8 @@
 package app.persistence.daos;
 
-import app.persistence.config.HibernateConfig;
 import app.persistence.dtos.DirectorDTO;
 import app.persistence.entities.Director;
 import app.persistence.entities.Movie;
-import app.persistence.enums.HibernateConfigState;
 import app.persistence.exceptions.JpaException;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.EntityManagerFactory;
@@ -16,19 +14,12 @@ import java.util.stream.Collectors;
 public class DirectorDAO {
 
     private static DirectorDAO instance;
-    private static EntityManagerFactory emf;
-    private EntityManager em;
+    private final EntityManager em;
+    private final EntityManagerFactory emf;
 
-    private  DirectorDAO() {
+    public  DirectorDAO(EntityManagerFactory emf) {
+        this.emf = emf;
         em = emf.createEntityManager();
-    }
-
-    public static DirectorDAO getInstance(HibernateConfigState state) {
-        if (instance == null) {
-            emf = HibernateConfig.getEntityManagerFactoryConfig(state, "movie");
-            instance = new DirectorDAO();
-        }
-        return instance;
     }
 
     public void create(DirectorDTO dto) {

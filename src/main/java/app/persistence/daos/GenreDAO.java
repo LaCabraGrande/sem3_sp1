@@ -1,7 +1,5 @@
 package app.persistence.daos;
 
-import app.persistence.config.HibernateConfig;
-import app.persistence.enums.HibernateConfigState;
 import app.persistence.exceptions.JpaException;
 import jakarta.persistence.*;
 import app.persistence.entities.Genre;
@@ -11,25 +9,12 @@ import java.util.Set;
 public class GenreDAO {
 
     private static GenreDAO instance;
-    private static EntityManagerFactory emf;
-    private EntityManager em;
+    private final EntityManager em;
+    private final EntityManagerFactory emf;
 
-    public GenreDAO() {
+    public GenreDAO(EntityManagerFactory emf) {
+        this.emf = emf;
         em = emf.createEntityManager();
-    }
-
-    public static GenreDAO getInstance(HibernateConfigState state) {
-        if (instance == null) {
-            emf = HibernateConfig.getEntityManagerFactoryConfig(state, "genre");
-            instance = new GenreDAO();
-        }
-        return instance;
-    }
-
-    public static void close() {
-        if (emf != null && emf.isOpen()) {
-            emf.close();
-        }
     }
 
     public Genre findById(Long id)

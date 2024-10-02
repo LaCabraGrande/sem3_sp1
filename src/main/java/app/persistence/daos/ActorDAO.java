@@ -1,9 +1,7 @@
 package app.persistence.daos;
 
-import app.persistence.config.HibernateConfig;
 import app.persistence.dtos.ActorDTO;
 import app.persistence.entities.Actor;
-import app.persistence.enums.HibernateConfigState;
 import app.persistence.exceptions.JpaException;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.EntityManagerFactory;
@@ -13,19 +11,12 @@ import java.util.stream.Collectors;
 public class ActorDAO {
 
     private static ActorDAO instance;
-    private static EntityManagerFactory emf;
-    private EntityManager em;
+    private final EntityManager em;
+    private final EntityManagerFactory emf;
 
-    private  ActorDAO() {
+    public  ActorDAO(EntityManagerFactory emf) {
+        this.emf = emf;
         em = emf.createEntityManager();
-    }
-
-    public static ActorDAO getInstance(HibernateConfigState state) {
-        if (instance == null) {
-            emf = HibernateConfig.getEntityManagerFactoryConfig(state, "movie");
-            instance = new ActorDAO();
-        }
-        return instance;
     }
 
     public void create(Actor actor) {

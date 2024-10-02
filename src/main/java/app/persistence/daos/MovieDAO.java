@@ -17,49 +17,14 @@ import java.util.stream.Collectors;
 public class MovieDAO {
 
     private static MovieDAO instance;
-    private static EntityManagerFactory emf;
     private final EntityManager em;
+    private final EntityManagerFactory emf;
 
-    private MovieDAO() {
+    public MovieDAO(EntityManagerFactory emf) {
+        this.emf = emf;
         em = emf.createEntityManager();
     }
 
-    // Singleton-metode til at hente en instans af MovieDAO
-    public static MovieDAO getInstance(HibernateConfigState state) {
-        if (instance == null) {
-            emf = HibernateConfig.getEntityManagerFactoryConfig(state, "movie");
-            instance = new MovieDAO();
-        }
-        return instance;
-    }
-
-    // Her lukker jeg EntityManagerFactory
-    public static void close() {
-        if (emf != null && emf.isOpen()) {
-            emf.close();
-        }
-    }
-
-
-    public void dropAllTables() {
-       try (EntityManager em = emf.createEntityManager()) {
-            em.getTransaction().begin();
-            // Her sletter jeg alle mine tabeller i databasen
-            em.createNativeQuery("DROP TABLE IF EXISTS Movie CASCADE").executeUpdate();
-            em.createNativeQuery("DROP TABLE IF EXISTS Genre CASCADE").executeUpdate();
-            em.createNativeQuery("DROP TABLE IF EXISTS Actor CASCADE").executeUpdate();
-            em.createNativeQuery("DROP TABLE IF EXISTS Director CASCADE").executeUpdate();
-            em.createNativeQuery("DROP TABLE IF EXISTS movie_actor CASCADE").executeUpdate();
-            em.createNativeQuery("DROP TABLE IF EXISTS movie_genre CASCADE").executeUpdate();
-            em.getTransaction().commit();
-            System.out.println("Alle tabeller er blevet slettet i Databasen!");
-        } catch (Exception e) {
-            if (em.getTransaction().isActive()) {
-                em.getTransaction().rollback();
-            }
-            e.printStackTrace();
-        }
-    }
 
     // Metode til at finde en film baseret på id
     public Movie findById(Long id) {

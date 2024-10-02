@@ -8,7 +8,6 @@ import app.persistence.entities.Actor;
 import app.persistence.entities.Director;
 import app.persistence.entities.Genre;
 import app.persistence.entities.Movie;
-import app.persistence.enums.HibernateConfigState;
 import app.persistence.fetcher.FilmFetcher;
 import app.persistence.services.FilmService;
 import app.persistence.services.MovieService;
@@ -20,22 +19,31 @@ import java.util.stream.Collectors;
 
 public class Main {
     static final int LINE_WIDTH = 160;
-    static EntityManagerFactory emf = HibernateConfig.getEntityManagerFactoryConfig(HibernateConfigState.NORMAL, "moviedb");
+    private static EntityManagerFactory emf = HibernateConfig.getEntityManagerFactory("moviedb");
     private static final String RED = "\u001B[31m";
     private static final String BLUE = "\u001B[34m";
     private static final String WHITE = "\u001B[39m";
     private static final String RESET = "\u001B[0m";
 
     public static void main(String[] args) throws Exception {
-        MovieDAO movieDAO = MovieDAO.getInstance(HibernateConfigState.NORMAL);
-        GenreDAO genreDAO = GenreDAO.getInstance(HibernateConfigState.NORMAL);
-        ActorDAO actorDAO = ActorDAO.getInstance(HibernateConfigState.NORMAL);
-        DirectorDAO directorDAO = DirectorDAO.getInstance(HibernateConfigState.NORMAL);
+
+        MovieDAO movieDAO = new MovieDAO(emf);
+        GenreDAO genreDAO = new GenreDAO(emf);
+        ActorDAO actorDAO = new ActorDAO(emf);
+        DirectorDAO directorDAO = new DirectorDAO(emf);
         FilmFetcher filmFetcher = new FilmFetcher(genreDAO);
         FilmService filmService = new FilmService(filmFetcher, movieDAO, genreDAO, actorDAO, directorDAO, emf);
         MovieService movieService = new MovieService(movieDAO);
         Scanner scanner = new Scanner(System.in);
+        if(movieDAO.getAllMovies().isEmpty()) {
+            System.out.println("Ingen film i databasen. Henter film fra API...");
+            filmFetcher.populateGenres();
+            filmService.fetchAndSaveMovies();
+        }
+
+
         if (movieDAO.getAllMovies().isEmpty()) {
+            System.out.println("Ingen film i databasen. Henter film fra API...");
             filmFetcher.populateGenres();
             filmService.fetchAndSaveMovies();
         }
