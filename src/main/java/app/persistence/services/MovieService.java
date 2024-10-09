@@ -1,6 +1,7 @@
 package app.persistence.services;
 
 import app.persistence.daos.MovieDAO;
+import app.persistence.dtos.MovieDTO;
 import app.persistence.entities.Movie;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.util.List;
@@ -16,32 +17,79 @@ public class MovieService {
         this.movieDAO = movieDAO;
     }
 
-    // Returnerer en liste af film med en angiven rating
-    public List<Movie> getMoviesWithRatingAbove(double rating) {
+    public List<MovieDTO> getAllMovies() {
+
         return movieDAO.getAllMovies().stream()
-                .filter(movie -> movie.getVoteAverage() > rating)
+                .map(MovieDTO::new)
+                .collect(Collectors.toList());
+    }
+
+    // Returnerer en liste af film med en angiven rating
+    public List<MovieDTO> getMoviesByRating(double rating) {
+        return movieDAO.getAllMovies().stream()
+                .filter(movie -> movie.getVoteAverage() == rating)
+                .map(MovieDTO::new)
                 .collect(Collectors.toList());
     }
 
     // Returnerer en liste af Movies af en angiven genre
-    public List<Movie> getMoviesByGenre(String genreName) {
+    public List<MovieDTO> getMoviesByGenre(String genreName) {
         return movieDAO.getAllMovies().stream()
-                .filter(movie -> movie.getGenres().stream()
-                        .anyMatch(genre -> genre.getName().equalsIgnoreCase(genreName)))
+                .filter(movie -> movie.getGenres().contains(genreName))
+                .map(MovieDTO::new)
                 .collect(Collectors.toList());
     }
 
     // Returnerer en liste af film fra det angivne år
-    public List<Movie> getMoviesFromYear(int year) {
+    public List<MovieDTO> getMoviesFromYear(int year) {
         return movieDAO.getAllMovies().stream()
-                .filter(movie -> movie.getReleaseDate() != null && movie.getReleaseDate().startsWith(String.valueOf(year)))
+                .filter(movie -> {
+                    // Hent de første 4 tegn fra releaseDate som et år
+                    String releaseDate = movie.getReleaseDate();
+                    if (releaseDate != null && releaseDate.length() >= 4) {
+                        int movieYear = Integer.parseInt(releaseDate.substring(0, 4));
+                        return movieYear == year;
+                    }
+                    return false;
+                })
+                .map(MovieDTO::new)
                 .collect(Collectors.toList());
     }
 
     // Returnerer en liste af film med et angivet minimum af stemmer
-    public List<Movie> getMoviesWithMinimumVotes(int minVoteCount) {
+    public List<MovieDTO> getMoviesWithMinimumVotes(int minVoteCount) {
         return movieDAO.getAllMovies().stream()
                 .filter(movie -> movie.getVoteCount() >= minVoteCount)
+                .map(MovieDTO::new)
+                .collect(Collectors.toList());
+    }
+
+    public MovieDTO getMovieByImdbId(String imdbId) {
+        Movie movie = movieDAO.findByImdbId(Long.valueOf(imdbId));
+        if (movie != null) {
+            return new MovieDTO(movie);
+        }
+        return null;
+    }
+
+    public List<MovieDTO> getMoviesByInstructor(String instructor) {
+        return movieDAO.getAllMovies().stream()
+                .filter(movie -> movie.getDirector() != null && movie.getDirector().getName().equals(instructor))
+                .map(MovieDTO::new)
+                .collect(Collectors.toList());
+    }
+
+    public List<MovieDTO> getMoviesByActor(String actor) {
+        return movieDAO.getAllMovies().stream()
+                .filter(movie -> movie.getActors().stream().anyMatch(actorDTO -> actorDTO.getName().equals(actor)))
+                .map(MovieDTO::new)
+                .collect(Collectors.toList());
+    }
+
+    public List<MovieDTO> getMoviesByTitle(String title) {
+        return movieDAO.getAllMovies().stream()
+                .filter(movie -> movie.getTitle().toLowerCase().contains(title.toLowerCase()))
+                .map(MovieDTO::new)
                 .collect(Collectors.toList());
     }
 
@@ -53,6 +101,4 @@ public class MovieService {
             throw new Exception("Fejl ved konvertering til JSON: " + e.getMessage());
         }
     }
-
-
 }

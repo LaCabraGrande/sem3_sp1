@@ -19,12 +19,25 @@ public class HibernateConfig {
 
     private static EntityManagerFactory emf;
     private static EntityManagerFactory emfTest;
+    private static boolean isTest = false;
 
     public static EntityManagerFactory getEntityManagerFactory(String DBName) {
         if (emf == null)
-            emf = createEMF(false, DBName);
+            if (isTest)
+                emf = createEMF(true, DBName);
+            else
+                emf = createEMF(false, DBName);
         return emf;
     }
+
+    public static void setTest(boolean test) {
+        isTest = test;
+    }
+
+    public static boolean isTest() {
+        return isTest;
+    }
+
     public static EntityManagerFactory getEntityManagerFactoryForTest() {
         if (emfTest == null)
             emfTest = createEMF(true,""); // No DB needed for test

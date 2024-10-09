@@ -16,17 +16,42 @@
         <postgresql.version>42.7.4</postgresql.version>
         <hibernate-version>6.2.4.Final</hibernate-version>
         <testcontainers.version>1.20.0</testcontainers.version>
+        <logback.version>1.5.8</logback.version>
         <slf4j.version>2.0.16</slf4j.version>
         <jackson.version>2.15.0</jackson.version>
         <apache.version>1.27.1</apache.version>
+        <javalin.version>6.3.0</javalin.version>
+        <hamcrest>2.2</hamcrest>
+        <hamcrest.version>2.0.0.0</hamcrest.version>
+        <rest-assured>5.5.0</rest-assured>
+        <hikari.version>5.1.0</hikari.version>
     </properties>
-
     <dependencies>
-        <!-- Javalin dependency -->
+
+        <!--  LOGGING   -->
+
+        <dependency>
+            <groupId>ch.qos.logback</groupId>
+            <artifactId>logback-classic</artifactId>
+            <version>${logback.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>ch.qos.logback</groupId>
+            <artifactId>logback-core</artifactId>
+            <version>${logback.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.slf4j</groupId>
+            <artifactId>slf4j-api</artifactId>
+            <version>${slf4j.version}</version>
+        </dependency>
+
+        <!--  WEB FRAMEWORK -->
+
         <dependency>
             <groupId>io.javalin</groupId>
             <artifactId>javalin</artifactId>
-            <version>6.3.0</version>
+            <version>${javalin.version}</version>
         </dependency>
         <dependency>
             <groupId>io.javalin</groupId>
@@ -34,31 +59,14 @@
             <version>6.3.0</version>
         </dependency>
 
-        <!-- Logger -->
-        <dependency>
-            <groupId>org.slf4j</groupId>
-            <artifactId>slf4j-api</artifactId>
-            <version>${slf4j.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>org.slf4j</groupId>
-            <artifactId>slf4j-simple</artifactId>
-            <version>${slf4j.version}</version>
-        </dependency>
+        <!-- UTILITIES -->
 
-        <!-- DB -->
         <dependency>
-            <groupId>org.postgresql</groupId>
-            <artifactId>postgresql</artifactId>
-            <version>${postgresql.version}</version>
+            <groupId>org.projectlombok</groupId>
+            <artifactId>lombok</artifactId>
+            <version>1.18.28</version> <!-- or the latest version -->
+            <scope>provided</scope>
         </dependency>
-        <dependency>
-            <groupId>org.hibernate.orm</groupId>
-            <artifactId>hibernate-core</artifactId>
-            <version>${hibernate-version}</version>
-        </dependency>
-
-        <!-- Jackson for JSON handling -->
         <dependency>
             <groupId>com.fasterxml.jackson.core</groupId>
             <artifactId>jackson-core</artifactId>
@@ -70,15 +78,30 @@
             <version>${jackson.version}</version>
         </dependency>
 
-        <!-- Lombok for reducing boilerplate code -->
+        <!--  DATABASE  -->
+
         <dependency>
-            <groupId>org.projectlombok</groupId>
-            <artifactId>lombok</artifactId>
-            <version>1.18.28</version> <!-- or the latest version -->
-            <scope>provided</scope>
+            <groupId>org.hibernate.orm</groupId>
+            <artifactId>hibernate-core</artifactId>
+            <version>${hibernate-version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.postgresql</groupId>
+            <artifactId>postgresql</artifactId>
+            <version>${postgresql.version}</version>
         </dependency>
 
-        <!-- Testing -->
+
+        <!-- APACHE COMMONS COMPRESS -->
+
+        <dependency>
+            <groupId>org.apache.commons</groupId>
+            <artifactId>commons-compress</artifactId>
+            <version>${apache.version}</version>
+        </dependency>
+
+        <!-- TESTING -->
+
         <dependency>
             <groupId>org.junit.jupiter</groupId>
             <artifactId>junit-jupiter-api</artifactId>
@@ -97,16 +120,12 @@
             <version>${junit.version}</version>
             <scope>test</scope>
         </dependency>
-
-        <!-- APACHE COMMONS COMPRESS -->
-
         <dependency>
-            <groupId>org.apache.commons</groupId>
-            <artifactId>commons-compress</artifactId>
-            <version>${apache.version}</version>
+            <groupId>org.hamcrest</groupId>
+            <artifactId>java-hamcrest</artifactId>
+            <version>${hamcrest.version}</version>
+            <scope>test</scope>
         </dependency>
-
-        <!-- Test Containers -->
         <dependency>
             <groupId>org.testcontainers</groupId>
             <artifactId>testcontainers</artifactId>
@@ -135,16 +154,39 @@
             <artifactId>json</artifactId>
             <version>20231013</version> <!-- Brug den nyeste version -->
         </dependency>
+
+        <!-- REST ASSURED -->
+
         <dependency>
-            <groupId>ch.qos.logback</groupId>
-            <artifactId>logback-classic</artifactId>
-            <version>1.4.14</version>
+            <groupId>io.rest-assured</groupId>
+            <artifactId>rest-assured</artifactId>
+            <version>${rest-assured}</version>
+            <scope>test</scope>
         </dependency>
         <dependency>
-            <groupId>ch.qos.logback</groupId>
-            <artifactId>logback-core</artifactId>
-            <version>1.4.14</version>
+            <groupId>io.rest-assured</groupId>
+            <artifactId>json-path</artifactId>
+            <version>${rest-assured}</version>
+            <scope>test</scope>
         </dependency>
+
+        <!-- HAMCREST -->
+
+        <dependency>
+            <groupId>org.hamcrest</groupId>
+            <artifactId>hamcrest</artifactId>
+            <version>${hamcrest}</version>
+            <scope>test</scope>
+        </dependency>
+
+        <!-- CONNECTION POOL -->
+
+        <dependency>
+            <groupId>com.zaxxer</groupId>
+            <artifactId>HikariCP</artifactId>
+            <version>${hikari.version}</version>
+        </dependency>
+
     </dependencies>
     <build>
         <finalName>app</finalName> <!-- This is the name of the jar file -->

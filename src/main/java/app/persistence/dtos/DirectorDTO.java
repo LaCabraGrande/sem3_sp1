@@ -1,7 +1,9 @@
 package app.persistence.dtos;
 
+import app.persistence.entities.Director;
 import lombok.*;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 @NoArgsConstructor
 @AllArgsConstructor
@@ -13,4 +15,12 @@ public class DirectorDTO {
 
     private Set<Long> movieIds;
     private Set<String> movieTitles;
+
+    public DirectorDTO(Director director)
+    {
+        this.id = director.getId();
+        this.name = director.getName();
+        this.movieIds = director.getMovies().stream().map(movie -> movie.getId()).collect(Collectors.toSet());
+        this.movieTitles = director.getMovies().stream().map(movie -> movie.getTitle()).collect(Collectors.toSet());
+    }
 }

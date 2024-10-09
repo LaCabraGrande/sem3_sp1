@@ -1,5 +1,6 @@
 package app;
 
+import app.persistence.config.ApplicationConfig;
 import app.persistence.daos.ActorDAO;
 import app.persistence.daos.DirectorDAO;
 import app.persistence.daos.GenreDAO;
@@ -26,7 +27,7 @@ public class Main {
     private static final String RESET = "\u001B[0m";
 
     public static void main(String[] args) throws Exception {
-
+        ApplicationConfig.startServer(7074, emf);
         MovieDAO movieDAO = new MovieDAO(emf);
         GenreDAO genreDAO = new GenreDAO(emf);
         ActorDAO actorDAO = new ActorDAO(emf);
