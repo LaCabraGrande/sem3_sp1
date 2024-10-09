@@ -41,7 +41,7 @@ public class Main {
             filmService.fetchAndSaveMovies();
         }
 
-
+        // Her spørger jeg om databasen er tom, og hvis den er, henter jeg film fra API'en
         if (movieDAO.getAllMovies().isEmpty()) {
             System.out.println("Ingen film i databasen. Henter film fra API...");
             filmFetcher.populateGenres();

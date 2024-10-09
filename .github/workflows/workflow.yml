@@ -36,4 +36,4 @@ jobs:
           context: .
           file: ./Dockerfile
           push: true
-          tags: ${{ secrets.DOCKERHUB_USERNAME }}/Sem3_sp1:latest
+          tags: ${{ secrets.DOCKERHUB_USERNAME }}/sem3_sp1:latest
