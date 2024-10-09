@@ -15,7 +15,7 @@ public class Routes {
 
     public EndpointGroup getApiRoutes() {
         return () -> {
-            path("/rooms", movieRoute.getMovieRoutes());
+            path("/", movieRoute.getMovieRoutes());
         };
     }
 
