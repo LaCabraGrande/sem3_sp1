@@ -28,7 +28,7 @@ public class ApiServer {
         ObjectMapper mapper = new ObjectMapper();
 
         // Her opretter jeg en Javalin instans
-        Javalin app = Javalin.create().start(7070);
+        Javalin app = Javalin.create().start(7074);
 
         app.get("/moviesbyinstructor/{instructor}", ctx -> {
             try {

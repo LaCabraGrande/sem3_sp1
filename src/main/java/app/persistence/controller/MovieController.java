@@ -17,10 +17,15 @@ public class MovieController {
     }
 
     public void getAllMovies(Context ctx) {
-        logger.info("Received request to get all rooms"); // Log anmodning
-        List<MovieDTO> movies = movieService.getAllMovies();  // roomService returnerer nu allerede RoomDTO
-        ctx.json(movies);  // Returner som JSON
-        logger.info("Returning {} rooms", movies.size()); // Log antal værelser der returneres
+        try {
+            logger.info("Received request to get all rooms"); // Log anmodning
+            List<MovieDTO> movies = movieService.getAllMovies();  // roomService returnerer nu allerede RoomDTO
+            logger.info("Returning {} rooms", movies.size()); // Log antal værelser der returneres
+            ctx.json(movies);  // Returner som JSON
+        } catch (Exception e) {
+            logger.error("Error getting all movies: {}", e.getMessage()); // Log fejl
+            ctx.status(500).result("Internal Server Error"); // Returner fejl
+        }
     }
 
     public void getMoviesByRating(Context ctx) {
