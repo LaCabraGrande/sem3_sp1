@@ -19,6 +19,7 @@ public class MovieRoute {
         movieService = new MovieService(movieDAO);
         movieController = new MovieController(movieService);
     }
+    // Her defineres alle endpoints for MovieController
     public EndpointGroup getMovieRoutes() {
         return () -> {
             get("/movies/all", movieController::getAllMovies);
