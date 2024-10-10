@@ -27,7 +27,7 @@ public class Main {
     private static final String RESET = "\u001B[0m";
 
     public static void main(String[] args) throws Exception {
-        ApplicationConfig.startServer(7074, emf);
+        ApplicationConfig.startServer(7070, emf);
         MovieDAO movieDAO = new MovieDAO(emf);
         GenreDAO genreDAO = new GenreDAO(emf);
         ActorDAO actorDAO = new ActorDAO(emf);
