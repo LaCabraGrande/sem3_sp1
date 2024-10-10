@@ -13,9 +13,9 @@ public class Routes {
        movieRoute = new MovieRoute(emf);
     }
 
-    public EndpointGroup getApiRoutes() {
+    public EndpointGroup getRoutes() {
         return () -> {
-            path("/", movieRoute.getMovieRoutes());
+            path("/movies", movieRoute.getMovieRoutes());
         };
     }
 

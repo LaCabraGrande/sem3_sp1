@@ -10,13 +10,12 @@ public class ApplicationConfig {
     private static Routes routes;
 
     public static void configuration(JavalinConfig config) {
-        config.router.contextPath = "/api"; // base path for all routes
         config.showJavalinBanner = false;
+        config.bundledPlugins.enableRouteOverview("/routes");
+        config.router.contextPath = "/api"; // base path for all endpoints
+        config.router.apiBuilder(routes.getRoutes());
         config.http.defaultContentType = "application/json"; // default content type for requests
-        config.router.apiBuilder(routes.getApiRoutes());
 
-        // Plugins
-        config.bundledPlugins.enableRouteOverview("/routes"); // enables route overview at /routes
     }
 
     public static Javalin startServer(int port, EntityManagerFactory emf) {

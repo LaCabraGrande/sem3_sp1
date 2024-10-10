@@ -22,15 +22,15 @@ public class MovieRoute {
     // Her defineres alle endpoints for MovieController
     public EndpointGroup getMovieRoutes() {
         return () -> {
-            get("movies/all", movieController::getAllMovies);
-            get("movies/rating/{rating}", movieController::getMoviesByRating);
-            get("movies/genre/{genre}", movieController::getMoviesByGenre);
-            get("movies/year/{year}", movieController::getMoviesFromYear);
-            get("movies/imdb/{imdbId}", movieController::getMovieByImdbId);
-            get("moviesbyinstructor/{instructor}", movieController::getMoviesByInstructor);
-            get("moviesbyactor/{actor}", movieController::getMoviesByActor);
-            get("moviesbytitle/{title}", movieController::getMoviesByTitle);
-            get("movies/minvotes/{minVoteCount}", movieController::getMoviesWithMinimumVotes);
+            get("/all", movieController::getAllMovies);
+            get("/rating/{rating}", movieController::getMoviesByRating);
+            get("/genre/{genre}", movieController::getMoviesByGenre);
+            get("/year/{year}", movieController::getMoviesFromYear);
+            get("/imdb/{imdbId}", movieController::getMovieByImdbId);
+            get("/instructor/{instructor}", movieController::getMoviesByInstructor);
+            get("/actor/{actor}", movieController::getMoviesByActor);
+            get("/title/{title}", movieController::getMoviesByTitle);
+            get("/minvotes/{minVoteCount}", movieController::getMoviesWithMinimumVotes);
         };
     }
 }
