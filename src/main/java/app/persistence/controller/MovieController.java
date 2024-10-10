@@ -1,11 +1,11 @@
 package app.persistence.controller;
 
+import app.persistence.apis.MovieAPI;
 import app.persistence.dtos.MovieDTO;
 import io.javalin.http.Context;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import app.persistence.services.MovieService;
-
 import java.util.List;
 
 public class MovieController {
@@ -18,13 +18,21 @@ public class MovieController {
 
     public void getAllMovies(Context ctx) {
         try {
-            logger.info("Received request to get all rooms"); // Log anmodning
-            List<MovieDTO> movies = movieService.getAllMovies();  // roomService returnerer nu allerede RoomDTO
-            logger.info("Returning {} rooms", movies.size()); // Log antal værelser der returneres
-            ctx.json(movies);  // Returner som JSON
+            String pageParam = ctx.queryParam("page");
+            String sizeParam = ctx.queryParam("size");
+
+            int page = (pageParam != null) ? Integer.parseInt(pageParam) : 0;
+            int size = (sizeParam != null) ? Integer.parseInt(sizeParam) : 20;
+
+            List<MovieAPI> movieAPIS = movieService.getAllMoviesByPageAndSize(page, size);
+
+            logger.info("Modtaget {} film", movieAPIS.size()); // Log antal modtagne film
+            ctx.json(movieAPIS); // Returner liste af værelser
+        } catch (NumberFormatException e) {
+            ctx.status(400).result("Ugyldige værdier for page eller size");
         } catch (Exception e) {
-            logger.error("Error getting all movies: {}", e.getMessage()); // Log fejl
-            ctx.status(500).result("Internal Server Error"); // Returner fejl
+            logger.error("Der opstod en fejl ved hentning af filmene: {}", e.getMessage()); // Log fejl
+            ctx.status(500).result("Der opstod en fejl: " + e.getMessage());
         }
     }
 
@@ -64,7 +72,9 @@ public class MovieController {
 
     public void getMoviesByInstructor(Context ctx) {
         String instructor = ctx.pathParam("instructor");
+
         List<MovieDTO> movies = movieService.getMoviesByInstructor(instructor);
+
         ctx.json(movies);
     }
 

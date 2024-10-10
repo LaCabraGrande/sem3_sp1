@@ -24,6 +24,15 @@ public class MovieService {
                 .collect(Collectors.toList());
     }
 
+    public List<MovieAPI> getAllMoviesByPageAndSize(int page, int size) {
+        List<Movie> allMovies = movieDAO.getMovies(page, size);
+        List<MovieAPI> movieAPIS = allMovies.stream()
+                .map(MovieConverter::convertToMovieAPI)
+                .toList();
+        return movieAPIS;
+
+    }
+
     // Returnerer en liste af film med en angiven rating
     public List<MovieDTO> getMoviesByRating(double rating) {
         return movieDAO.getAllMovies().stream()
