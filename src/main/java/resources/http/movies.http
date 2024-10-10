@@ -1,0 +1,51 @@
+# Test for at hente alle film
+GET http://localhost:7074/api/all
+Accept: application/json
+
+###
+
+# Test for at hente film baseret på rating
+GET http://localhost:7074/api/rating/7
+Accept: application/json
+
+###
+
+# Test for at hente film baseret på genre
+GET http://localhost:7074/api/genre/Action
+Accept: application/json
+
+###
+
+# Test for at hente film baseret på udgivelsesår
+GET http://localhost:7074/api/year/2022
+Accept: application/json
+
+###
+
+# Test for at hente en film baseret på IMDb ID
+GET http://localhost:7074/api/imdb/tt1234567
+Accept: application/json
+
+###
+
+# Test for at hente film baseret på instruktør
+GET http://localhost:7074/api/instructor/John%20Doe
+Accept: application/json
+
+###
+
+# Test for at hente film baseret på skuespiller
+GET http://localhost:7074/api/actor/Actor%20Name
+Accept: application/json
+
+###
+
+# Test for at hente film baseret på titel
+GET http://localhost:7074/api/title/Some%20Movie%20Title
+Accept: application/json
+
+###
+
+# Test for at hente film med et minimum antal stemmer
+GET http://localhost:7074/api/minvotes/100
+Accept: application/json
