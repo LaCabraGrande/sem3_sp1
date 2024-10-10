@@ -1,5 +1,6 @@
 package app.persistence.services;
 
+import app.persistence.dtos.MovieDTO;
 import app.persistence.entities.Movie;
 import java.util.stream.Collectors;
 import app.persistence.apis.MovieAPI;
@@ -41,4 +42,33 @@ public class MovieConverter {
                 .director(movie.getDirector() != null ? movie.getDirector().getName() : null)
                 .build();
     }
+
+    // Metode til at konvertere en MovieDTO til en Movie
+    public static Movie convertToMovie(MovieDTO movieDTO) {
+        Movie movie = new Movie();
+        movie.setId(movieDTO.getDatabaseId());
+        movie.setImdbId(movieDTO.getImdbId());
+        movie.setTitle(movieDTO.getTitle());
+        movie.setDuration(movieDTO.getDuration());
+        movie.setOverview(movieDTO.getOverview());
+        movie.setReleaseDate(movieDTO.getReleaseDate());
+        movie.setAdult(movieDTO.getIsAdult());
+        movie.setBackdropPath(movieDTO.getBackdropPath());
+        movie.setPosterPath(movieDTO.getPosterPath());
+        movie.setPopularity(movieDTO.getPopularity());
+        movie.setOriginalLanguage(movieDTO.getOriginalLanguage());
+        movie.setOriginalTitle(movieDTO.getOriginalTitle());
+        movie.setVoteAverage(movieDTO.getVoteAverage());
+        movie.setVoteCount(movieDTO.getVoteCount());
+
+        // Hvis du har skuespillere, genrer eller instruktør, skal du også tilføje dem her.
+        // movie.setActors(convertActors(movieDTO.getActors())); // Antag en metode til dette
+        // movie.setGenres(convertGenres(movieDTO.getGenres())); // Antag en metode til dette
+
+        return movie;
+    }
+
 }
+
+
+

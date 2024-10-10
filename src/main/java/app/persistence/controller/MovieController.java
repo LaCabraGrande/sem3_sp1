@@ -2,10 +2,14 @@ package app.persistence.controller;
 
 import app.persistence.apis.MovieAPI;
 import app.persistence.dtos.MovieDTO;
+import app.persistence.entities.Movie;
+import app.persistence.services.MovieConverter;
 import io.javalin.http.Context;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import app.persistence.services.MovieService;
+
+import java.util.Comparator;
 import java.util.List;
 
 public class MovieController {
@@ -79,9 +83,32 @@ public class MovieController {
     }
 
     public void getMoviesByActor(Context ctx) {
-        String actor = ctx.pathParam("actor");
-        List<MovieDTO> movies = movieService.getMoviesByActor(actor);
-        ctx.json(movies);
+        String actorName = ctx.pathParam("actor");
+
+        try {
+            List<MovieDTO> moviesOfActor = movieService.getMoviesByActor(actorName);
+
+            if (moviesOfActor.isEmpty()) {
+                ctx.status(404).result("Der blev ikke fundet nogle film med skuespilleren: " + actorName);
+            } else {
+                // Filtrering af film med gyldige release datoer og sortering
+                List<Movie> sortedMovies = moviesOfActor.stream()
+                        .filter(movieDTO -> movieDTO.getReleaseDate() != null && movieDTO.getReleaseDate().length() >= 4)
+                        .sorted(Comparator.comparing(movieDTO -> movieDTO.getReleaseDate().substring(0, 4))) // Sorter efter år
+                        .map(MovieConverter::convertToMovie) // Konverter til Movie-entitet
+                        .toList();
+
+                // Konvertering til MovieAPI
+                List<MovieAPI> movieAPIS = sortedMovies.stream()
+                        .map(MovieConverter::convertToMovieAPI)
+                        .toList();
+
+                ctx.contentType("application/json");
+                ctx.json(movieAPIS); // Sender JSON responsen tilbage
+            }
+        } catch (Exception e) {
+            ctx.status(500).result("Fejl ved konvertering af film til JSON: " + e.getMessage());
+        }
     }
 
     public void getMoviesByTitle(Context ctx) {
