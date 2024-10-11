@@ -35,23 +35,18 @@ public class Main {
         FilmFetcher filmFetcher = new FilmFetcher(genreDAO);
         FilmService filmService = new FilmService(filmFetcher, movieDAO, genreDAO, actorDAO, directorDAO, emf);
         MovieService movieService = new MovieService(movieDAO);
-        Scanner scanner = new Scanner(System.in);
-        if(movieDAO.getAllMovies().isEmpty()) {
-            System.out.println("Ingen film i databasen. Henter film fra API...");
-            filmFetcher.populateGenres();
-            filmService.fetchAndSaveMovies();
-        }
+    //    Scanner scanner = new Scanner(System.in);
 
         // Her spørger jeg om databasen er tom, og hvis den er, henter jeg film fra API'en
-        if (movieDAO.getAllMovies().isEmpty()) {
-            System.out.println("Ingen film i databasen. Henter film fra API...");
-            filmFetcher.populateGenres();
-            filmService.fetchAndSaveMovies();
-        }
+//        if (movieDAO.getAllMovies().isEmpty()) {
+//            System.out.println("Ingen film i databasen. Henter film fra API...");
+//            filmFetcher.populateGenres();
+//            filmService.fetchAndSaveMovies();
+//        }
 
-        showMenu(movieDAO, genreDAO, actorDAO, directorDAO, filmService, scanner);
+    //    showMenu(movieDAO, genreDAO, actorDAO, directorDAO, filmService, scanner);
 
-        scanner.close();
+    //    scanner.close();
     }
 
     private static void showMenu(MovieDAO movieDAO, GenreDAO genreDAO, ActorDAO actorDAO, DirectorDAO directorDAO, FilmService filmService, Scanner scanner) throws Exception {
