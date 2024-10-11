@@ -2,7 +2,7 @@
 name: CI/CD WORKFLOW
 on:
   push:
-    branches: [ master ]  # Opdateret fra master til main
+    branches: [ main ]
 
 jobs:
   build:
@@ -10,34 +10,30 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4  # Opdateret til v4
 
       - name: Set up JDK 17
-        uses: actions/setup-java@v3
+        uses: actions/setup-java@v4  # Opdateret til v4
         with:
           java-version: '17'
           distribution: 'corretto'
 
       - name: Build with Maven
         run: mvn --batch-mode --update-snapshots package
-        continue-on-error: false  # Stopper ved fejl
 
       - name: Login to Docker Hub
-        uses: docker/login-action@v2
+        uses: docker/login-action@v3  # Opdateret til v3
         with:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
       - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v2
+        uses: docker/setup-buildx-action@v2  # Behold versionen, da den stadig er aktuel
 
       - name: Build and push Docker image
-        uses: docker/build-push-action@v4
+        uses: docker/build-push-action@v4  # Behold versionen, da den stadig er aktuel
         with:
           context: .
           file: ./Dockerfile
           push: true
           tags: ${{ secrets.DOCKERHUB_USERNAME }}/sem3_sp1:latest
-
-      - name: Notify build completion
-        run: echo "Build completed successfully!"  # Logmeddelelse ved succes
