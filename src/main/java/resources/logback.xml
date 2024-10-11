@@ -14,7 +14,7 @@
         </encoder>
     </appender>
 
-    <root level="info">
+    <root level="error"> <!-- Skift root niveau til ERROR for at minimere logoutput -->
         <appender-ref ref="CONSOLE" />
         <appender-ref ref="FILE" />
     </root>
