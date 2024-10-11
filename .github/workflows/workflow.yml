@@ -2,7 +2,7 @@
 name: CI/CD WORKFLOW
 on:
   push:
-    branches: [ master ]
+    branches: [ main ]  # Opdateret fra master til main
 
 jobs:
   build:
@@ -20,6 +20,7 @@ jobs:
 
       - name: Build with Maven
         run: mvn --batch-mode --update-snapshots package
+        continue-on-error: false  # Stopper ved fejl
 
       - name: Login to Docker Hub
         uses: docker/login-action@v2
@@ -29,7 +30,7 @@ jobs:
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v2
-#
+
       - name: Build and push Docker image
         uses: docker/build-push-action@v4
         with:
@@ -37,3 +38,6 @@ jobs:
           file: ./Dockerfile
           push: true
           tags: ${{ secrets.DOCKERHUB_USERNAME }}/sem3_sp1:latest
+
+      - name: Notify build completion
+        run: echo "Build completed successfully!"  # Logmeddelelse ved succes
