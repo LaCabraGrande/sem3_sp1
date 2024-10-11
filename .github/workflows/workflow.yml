@@ -10,10 +10,10 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v4  # Opdateret til v4
+        uses: actions/checkout@v4  # Behold versionen, da den er opdateret
 
       - name: Set up JDK 17
-        uses: actions/setup-java@v4  # Opdateret til v4
+        uses: actions/setup-java@v4  # Behold versionen, da den er opdateret
         with:
           java-version: '17'
           distribution: 'corretto'
@@ -22,16 +22,16 @@ jobs:
         run: mvn --batch-mode --update-snapshots package
 
       - name: Login to Docker Hub
-        uses: docker/login-action@v3  # Opdateret til v3
+        uses: docker/login-action@v3  # Behold versionen, da den er opdateret
         with:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
       - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v2  # Behold versionen, da den stadig er aktuel
+        uses: docker/setup-buildx-action@v3  # Opdateret til v3
 
       - name: Build and push Docker image
-        uses: docker/build-push-action@v4  # Behold versionen, da den stadig er aktuel
+        uses: docker/build-push-action@v5  # Opdateret til v5
         with:
           context: .
           file: ./Dockerfile
