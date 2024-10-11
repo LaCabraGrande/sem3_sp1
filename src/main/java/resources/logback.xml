@@ -19,6 +19,9 @@
         <appender-ref ref="FILE" />
     </root>
 
-    <!-- Adjust log levels for specific packages if needed -->
-    <logger name="app" level="debug" />
+    <!-- Juster logniveauer for specifikke pakker -->
+    <logger name="org.eclipse.jetty" level="info" /> <!-- Reducer logniveau for Jetty -->
+    <logger name="org.hibernate" level="info" /> <!-- Reducer logniveau for Hibernate -->
+    <logger name="app" level="info" /> <!-- Behold din app logniveau som info -->
+
 </configuration>

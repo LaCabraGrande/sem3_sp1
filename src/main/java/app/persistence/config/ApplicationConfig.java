@@ -6,7 +6,6 @@ import jakarta.persistence.EntityManagerFactory;
 import app.persistence.routes.Routes;
 
 public class ApplicationConfig {
-
     private static Routes routes;
 
     public static void configuration(JavalinConfig config) {
@@ -15,7 +14,6 @@ public class ApplicationConfig {
         config.router.contextPath = "/api"; // base path for all endpoints
         config.router.apiBuilder(routes.getRoutes());
         config.http.defaultContentType = "application/json"; // default content type for requests
-
     }
 
     public static Javalin startServer(int port, EntityManagerFactory emf) {
