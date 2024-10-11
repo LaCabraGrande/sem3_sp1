@@ -2,7 +2,7 @@
 name: CI/CD WORKFLOW
 on:
   push:
-    branches: [ main ]  # Opdateret fra master til main
+    branches: [ master ]  # Opdateret fra master til main
 
 jobs:
   build:
