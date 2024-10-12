@@ -170,7 +170,6 @@
     <button type="submit" id="search_movies">Search Movies</button>
 </div>
 
-
 <script>
     // Dynamisk udfyldning af minimum rating (1-10)
     const ratingSelect = document.getElementById('minimum_rating');
@@ -188,32 +187,16 @@
         ratingSelect.appendChild(option);
     }
 
-    // Dynamisk udfyldning af genre
-    const genres = [
-        { id: 1, name: "Action" },
-        { id: 2, name: "Drama" },
-        { id: 3, name: "Komedie" },
-        { id: 4, name: "Thriller" },
-        { id: 5, name: "Romantisk" }
-    ];
-    const genreSelect = document.getElementById('movie_genre');
-    genres.forEach(genre => {
-        const option = document.createElement('option');
-        option.value = genre.id;
-        option.text = genre.name;
-        genreSelect.appendChild(option);
-    });
-
     // Funktion til at søge film baseret på kriterier
     document.getElementById('search_movies').addEventListener('click', function() {
         // Hent værdier fra inputfelterne
-        const actorName = document.getElementById('actor_name').value;
-        const directorName = document.getElementById('director_name').value;
-        const year = document.getElementById('year').value;
-        const minRating = document.getElementById('minimum_rating').value;
-        const genre = document.getElementById('movie_genre').value;
-        const language = document.getElementById('language').value;
-        const sortBy = document.getElementById('sort_by').value;
+        const actorName = document.getElementById('actor_name').value || "All";
+        const directorName = document.getElementById('director_name').value || "All";
+        const year = document.getElementById('year').value || "All";
+        const minRating = document.getElementById('minimum_rating').value || "All";
+        const genre = document.getElementById('movie_genre').value || "All";
+        const language = document.getElementById('language').value || "All";
+        const sortBy = document.getElementById('sort_by').value || "All";
 
         // Log værdierne til konsollen (kan erstattes med reelt søge-API kald)
         console.log(`Søger efter film med følgende kriterier:
@@ -225,7 +208,29 @@
             Sprog: ${language}
             Sortér efter: ${sortBy}
         `);
+
+        // Implementér API-kald her med de indsamlede værdier
+        // fetchMovies(actorName, directorName, year, minRating, genre, language, sortBy);
     });
+
+    // Eksempel på API-kald (erstattet med et fiktivt fetch kald)
+    function fetchMovies(actorName, directorName, year, minRating, genre, language, sortBy) {
+        // Brug værdierne til at danne en forespørgsel til API'et
+        console.log(`Fetching movies with: Actor=${actorName}, Director=${directorName}, Year=${year}, Rating=${minRating}, Genre=${genre}, Language=${language}, Sort By=${sortBy}`);
+
+        // Her kan du bruge fetch eller anden API-opkaldsmekanisme til at hente film
+        /*
+        fetch('/api/movies', {
+            method: 'POST',
+            body: JSON.stringify({ actorName, directorName, year, minRating, genre, language, sortBy }),
+            headers: {
+                'Content-Type': 'application/json'
+            }
+        }).then(response => response.json())
+          .then(data => console.log(data))
+          .catch(error => console.error('Error:', error));
+        */
+    }
 </script>
 
 </body>
