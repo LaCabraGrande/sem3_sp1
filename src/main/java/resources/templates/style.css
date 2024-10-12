@@ -54,7 +54,7 @@ select, input[type="text"] {
 
 button {
     background-color: #007BFF;
-    width: 150px; /* Fast bredde på knap */
+    width: 160px; /* Fast bredde på knap */
     padding: 12px; /* Indvendig polstring */
     font-size: 17px; /* Skriftstørrelse */
     color: white;

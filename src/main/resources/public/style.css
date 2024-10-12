@@ -1,106 +1,127 @@
+/* Centrering af knapper */
 .button-container {
-    display: flex; /* Brug Flexbox for at centrere knappen */
-    justify-content: center; /* Centrér knappen horisontalt */
-    margin-top: 20px; /* Margin for at adskille knappen fra inputfelterne */
+    display: flex;
+    justify-content: center;
+    margin-top: 20px;
 }
 
+/* Body-stil */
 body {
     font-family: Arial, sans-serif;
-    background-color: #333; /* Mørkegrå baggrund */
+    background-color: #333;
     margin: 0;
     padding: 20px;
 }
 
+/* Titel-stil */
 h1 {
     text-align: center;
-    color: #fff; /* Hvid tekst for bedre synlighed */
+    color: #fff;
 }
 
+/* Container for søgefelterne */
 .search-container {
-    display: flex; /* Brug Flexbox */
-    flex-wrap: wrap; /* Tillad wrapping */
-    justify-content: center; /* Centrér indholdet */
-    align-items: flex-start; /* Juster indholdet til toppen */
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    align-items: flex-start;
 }
 
+/* Style for grupper af input */
 .form-group {
-    margin-right: 40px; /* Fast plads mellem inputfelter */
+    margin-right: 40px;
     margin-bottom: 20px;
 }
 
 .form-group:last-child {
-    margin-right: 0; /* Ingen margin til højre på det sidste element */
+    margin-right: 0;
 }
 
+/* Stil for underoverskrifter */
 h2 {
     font-size: 18px;
-    color: #fff; /* Hvid tekst for bedre synlighed */
+    color: #fff;
 }
 
+/* Wrapper til select-felterne */
 .select-wrapper {
     margin-top: 10px;
-}
-
-select, input[type="text"] {
-    width: 200px; /* Fast bredde på 200px */
-    padding: 10px; /* Samme padding for alle inputfelter */
-    border: 1px solid #ccc;
-    border-radius: 4px;
-    box-sizing: border-box; /* Tag højde for padding og border i bredde */
-    background-color: #444; /* Grå farve som tidligere baggrund */
-    color: #fff; /* Hvid tekst i inputfelter */
-    font-size: 16px; /* Samme font-størrelse som knappen */
-}
-
-button {
-    background-color: #007BFF;
-    width: 140px; /* Fast bredde på knap */
-    padding: 10px; /* Indvendig polstring */
-    font-size: 16px; /* Skriftstørrelse */
-    color: white;
-    border: none;
-    border-radius: 15px 15px 15px 15px;
-    height: 100%; /* Sørg for at knappen har samme højde som inputfelter */
-    cursor: pointer; /* Ændrer cursor til hånd, når man holder musen over knappen */
-    transition: background-color 0.4s, color 0.4s;
-}
-
-button:hover {
-    background-color: #0056b3;
-}
-
-button {
-    padding: 10px 20px;
-    background-color: #007BFF;
-    color: white;
-    border: none;
-    border-radius: 4px;
-    cursor: pointer; /* Indicates the button is clickable */
-}
-
-button:hover {
-    background-color: #0056b3; /* Darkens the button on hover for feedback */
-}
-
-select:focus, input[type="text"]:focus {
-    border-color: #5cb85c;
-    outline: none;
-}
-
-.select-wrapper {
     position: relative;
 }
 
+/* Generelle input- og select-stile */
+select, input[type="text"] {
+    width: 200px;
+    padding: 10px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    box-sizing: border-box;
+    background-color: #444;
+    color: #fff;
+    font-size: 16px;
+    transition: border-color 0.3s, background-color 0.3s, transform 0.3s;
+}
+
+/* Hover-effekt og action-animering på input-felter */
+select:hover, input[type="text"]:hover {
+    border-color: #5cb85c;
+    background-color: #555;
+    /*transform: scale(1.05); Lidt forstørrelse ved hover */
+}
+
+/* Focus-effekt på input og select felter */
+select:focus, input[type="text"]:focus {
+    border-color: #5cb85c;
+    outline: none;
+    box-shadow: 0 0 10px rgba(92, 184, 92, 0.5);
+}
+
+/* Stil til knapper */
+button {
+    background-color: #007BFF;
+    width: 160px;
+    padding: 12px;
+    font-size: 17px;
+    color: white;
+    border: none;
+    border-radius: 10px;
+    cursor: pointer;
+    transition: background-color 0.6s, transform 0.3s, color 0.3s;
+}
+
+/* Hover-effekt og transition for knapper */
+button:hover {
+    background-color: #0056b3;
+    color: #ddd;
+
+}
+
+/* Aktiv-effekt for knapper */
+button:active {
+    background-color: #00408a;
+
+}
+
+/* Custom stil for select-felter med pil */
 .select-wrapper::after {
-    content: "▼";
+
     position: absolute;
     right: 10px;
-    top: 10px;
+    top: 12px;
     pointer-events: none;
     color: #999;
 }
 
-/* Tilføjet stilarter for knapper og inputs */
+/* Fokus-effekt på input og select ved indtastning */
+input[type="text"]::placeholder, select {
+    transition: color 0.3s;
+}
+
+input[type="text"]:focus::placeholder {
+    color: transparent;
+}
+
+/* Standard stil til input og tekst */
 input[type="text"] {
     transition: border-color 0.3s;
 }
