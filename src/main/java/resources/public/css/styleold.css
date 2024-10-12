@@ -1,0 +1,142 @@
+/* Grundlæggende stilarter for body og html */
+body, html {
+    margin: 0;
+    padding: 0;
+    font-family: Arial, sans-serif;
+    height: 100%;
+    box-sizing: border-box;
+}
+
+/* Overskriftstile */
+h1 {
+    font-size: 54px;
+    color: #3a4d7f;
+}
+
+h2 {
+    font-size: 25px;
+    padding-left: 10px;
+    color: #3a4d7f;
+}
+
+h4 {
+    font-size: 18px;
+}
+
+/* Container til layout */
+.container {
+    display: flex;
+    height: 100vh;
+}
+
+/* Venstre panel */
+.left-inner-page {
+    background-color: #3a4d7f;
+    padding: 0 45px;
+    flex: 0 0 425px;
+    box-sizing: border-box;
+}
+
+/* Navigation */
+.navbar {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    background-color: white;
+}
+
+.navbar h1 {
+    margin: 80px 50px 80px 0;
+    color: white;
+    text-align: left;
+    font-size: 120px;
+}
+
+/* Knappestil */
+.nav-btn {
+    display: flex;
+    align-items: center;
+    background-color: #3a4d7f;
+    font-size: 22px;
+    color: white;
+    border: none;
+    border-radius: 0px;
+    padding: 15px;
+    transition: background-color 0.3s, color 0.3s;
+    cursor: pointer;
+    width: 100%;
+    text-align: left;
+}
+
+/* Aktiv tilstand for knapper */
+.nav-btn.active {
+    background-color: white;
+    color: #3a4d7f;
+    border-radius: 10px 10px 0 0;
+}
+
+/* Hover effekt for knapper */
+.nav-btn:hover {
+    background-color: rgba(255, 255, 255, 0.2);
+}
+
+/* Højre panel */
+.right-inner-page {
+    flex: 1;
+    padding: 160px 20px 20px 80px;
+    overflow-y: auto;
+    box-sizing: border-box;
+}
+
+/* Formatering af formularer */
+.form-group {
+    margin-bottom: 20px;
+}
+
+select {
+    width: 350px;
+    padding: 15px;
+    border: 2px solid #ccc;
+    border-radius: 25px;
+    background-color: #ecf0f1;
+    color: #576574;
+    font-size: 18px;
+    appearance: none;
+}
+
+/* Stile til knapper */
+button {
+    padding: 10px 23px;
+    border-radius: 25px;
+    font-size: 20px;
+    cursor: pointer;
+    transition: background-color 0.4s, transform 0.2s;
+}
+
+button.return-button {
+    background-color: #ff6347;
+    color: #fff;
+    border: none;
+}
+
+button.return-button:hover {
+    background-color: #dc143c;
+    transform: scale(1.05);
+}
+
+/* Tabelstile */
+.carporttable {
+    width: 90%;
+    font-size: 14px;
+    border-collapse: collapse;
+}
+
+.carporttable td {
+    padding: 2px;
+    border-bottom: 1px solid #ddd;
+    text-align: left;
+}
+
+.carporttable tr:first-child {
+    background-color: #f2f2f2;
+}

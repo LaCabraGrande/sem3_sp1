@@ -1,0 +1,84 @@
+/* Base styles for the body to center text and improve font visibility */
+body {
+    font-family: Arial, sans-serif; /* Ensures a clean, readable font is used */
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center; /* Centers text */
+}
+
+/* Responsive table styling */
+table {
+    width: 100%;
+    max-width: 960px; /* Limits the table width on larger screens */
+    margin: 20px 0;
+    border-collapse: collapse;
+}
+
+th, td {
+    border: 1px solid #ddd; /* Adds a light border to table cells */
+    padding: 8px;
+    text-align: left; /* Aligns table text to left for better readability */
+}
+
+th {
+    background-color: #f4f4f4; /* Light background for headers for distinction */
+}
+
+/* Form styling */
+form {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 10px; /* Space between form elements */
+    margin: 20px;
+}
+
+input[type="text"], input[type="email"], input[type="number"] {
+    padding: 10px;
+    border: 2px solid #ccc;
+    border-radius: 4px;
+}
+
+button {
+    padding: 10px 20px;
+    background-color: #007BFF;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer; /* Indicates the button is clickable */
+}
+
+button:hover {
+    background-color: #0056b3; /* Darkens the button on hover for feedback */
+}
+
+/* Make the content responsive */
+@media (max-width: 768px) {
+    form {
+        flex-direction: column; /* Stacks form elements vertically on small screens */
+    }
+
+    table, thead, tbody, th, td, tr {
+        display: block; /* Converts table to block layout for better handling on small screens */
+    }
+
+    td {
+        max-width: 90%; /* Limits td width and allows word breaking */
+        word-wrap: break-word;
+    }
+}
+
+/* Enhancements for headings and paragraph spacing */
+h1, h2, p {
+    margin: 10px 0;
+}
+
+/* Special styling for the price display to make it stand out */
+#partsTable, .table th, .table td {
+    font-weight: bold; /* Makes font bold for better visibility */
+}
+
+/* Additional responsiveness and styling as needed */
