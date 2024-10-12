@@ -12,7 +12,7 @@ public class ApplicationConfig {
     public static void configuration(JavalinConfig config) {
         config.showJavalinBanner = false;
         config.bundledPlugins.enableRouteOverview("/routes");
-        config.router.contextPath = "/api"; // base path for all endpoints
+        config.router.contextPath = "/"; // base path for all endpoints
         config.router.apiBuilder(routes.getRoutes());
         config.http.defaultContentType = "application/json";
         config.staticFiles.add("/public"); // default content type for requests
@@ -24,7 +24,7 @@ public class ApplicationConfig {
         Javalin app = Javalin.create(ApplicationConfig::configuration);
 
         // Gengiv index.html ved hjælp af Thymeleaf
-        app.get("/", ctx -> ctx.render("index.html")); // Gengiv index.html fra templates
+        //app.get("/", ctx -> ctx.redirect("/public/index.html")); // Redirect til index.html i public-mappen
 
         app.start(port);
         return app;
