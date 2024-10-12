@@ -45,7 +45,7 @@ select, input[type="text"] {
     width: 200px; /* Fast bredde på 200px */
     padding: 10px; /* Samme padding for alle inputfelter */
     border: 1px solid #ccc;
-    border-radius: 4px;
+    border-radius: 5px;
     box-sizing: border-box; /* Tag højde for padding og border i bredde */
     background-color: #444; /* Grå farve som tidligere baggrund */
     color: #fff; /* Hvid tekst i inputfelter */
@@ -53,15 +53,21 @@ select, input[type="text"] {
 }
 
 button {
+    background-color: #007BFF;
     width: 140px; /* Fast bredde på knap */
-    padding: 10px; /* Indvendig polstring */
-    font-size: 16px; /* Skriftstørrelse */
+    padding: 12px; /* Indvendig polstring */
+    font-size: 17px; /* Skriftstørrelse */
+    color: white;
+    border: none;
+    border-radius: 10px 10px 10px 10px;
     height: 100%; /* Sørg for at knappen har samme højde som inputfelter */
     cursor: pointer; /* Ændrer cursor til hånd, når man holder musen over knappen */
+    transition: background-color 0.6s, color 0.6s;
 }
 
 button:hover {
-    background-color: #4cae4c;
+    background-color: #0056b3;
+
 }
 
 select:focus, input[type="text"]:focus {
@@ -74,7 +80,6 @@ select:focus, input[type="text"]:focus {
 }
 
 .select-wrapper::after {
-    content: "▼";
     position: absolute;
     right: 10px;
     top: 10px;

@@ -53,15 +53,33 @@ select, input[type="text"] {
 }
 
 button {
+    background-color: #007BFF;
     width: 140px; /* Fast bredde på knap */
     padding: 10px; /* Indvendig polstring */
     font-size: 16px; /* Skriftstørrelse */
+    color: white;
+    border: none;
+    border-radius: 15px 15px 15px 15px;
     height: 100%; /* Sørg for at knappen har samme højde som inputfelter */
     cursor: pointer; /* Ændrer cursor til hånd, når man holder musen over knappen */
+    transition: background-color 0.4s, color 0.4s;
 }
 
 button:hover {
-    background-color: #4cae4c;
+    background-color: #0056b3;
+}
+
+button {
+    padding: 10px 20px;
+    background-color: #007BFF;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer; /* Indicates the button is clickable */
+}
+
+button:hover {
+    background-color: #0056b3; /* Darkens the button on hover for feedback */
 }
 
 select:focus, input[type="text"]:focus {
