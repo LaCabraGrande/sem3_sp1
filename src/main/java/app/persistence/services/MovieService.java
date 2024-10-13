@@ -4,6 +4,8 @@ import app.persistence.daos.MovieDAO;
 import app.persistence.dtos.MovieDTO;
 import app.persistence.entities.Movie;
 import com.fasterxml.jackson.databind.ObjectMapper;
+
+import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 import app.persistence.apis.MovieAPI;
@@ -96,11 +98,23 @@ public class MovieService {
     }
 
     public List<MovieDTO> getMoviesByTitle(String title) {
-        return movieDAO.getAllMovies().stream()
-                .filter(movie -> movie.getOriginalTitle().toLowerCase().contains(title.toLowerCase()))
+        // Hent filmene fra DAO
+        List<Movie> movies = movieDAO.searchMoviesByTitle(title);
+
+        // Tjekker om listen er null eller tom
+        if (movies == null || movies.isEmpty()) {
+            // Log en besked eller håndter tilfælde uden fundne film
+            System.out.println("\nIngen film fundet med titlen: " + title+"\n");
+            return Collections.emptyList(); // Returnerer en tom liste
+        }
+
+        // Konverterer Movie objekter til MovieDTO
+        return movies.stream()
                 .map(MovieDTO::new)
                 .collect(Collectors.toList());
     }
+
+
 
     // Konverterer en liste af MovieAPIs til en JSON-String som returneres
     public String convertMoviesToJson(List<MovieAPI> movieAPIs) throws Exception {

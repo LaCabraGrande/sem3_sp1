@@ -8,7 +8,8 @@ import java.util.Set;
 
 @Entity
 @Table(name = "genre")
-@Data
+@Getter
+@Setter
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
@@ -24,7 +25,7 @@ public class Genre {
     @Column(name = "name", nullable = false)
     private String name;
 
-    @ManyToMany(mappedBy = "genres")
+    @ManyToMany(mappedBy = "genres", fetch = FetchType.EAGER)
     @JsonBackReference
     @ToString.Exclude
     private Set<Movie> movies;

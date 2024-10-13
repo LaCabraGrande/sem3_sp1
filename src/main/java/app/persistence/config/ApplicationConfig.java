@@ -19,7 +19,7 @@ public class ApplicationConfig {
         config.fileRenderer(new JavalinThymeleaf(ThymeleafConfig.templateEngine()));
     }
 
-    public static Javalin startServer(int port, EntityManagerFactory emf) {
+    public static void startServer(int port, EntityManagerFactory emf) {
         routes = new Routes(emf);
         Javalin app = Javalin.create(ApplicationConfig::configuration);
 
@@ -27,7 +27,6 @@ public class ApplicationConfig {
         //app.get("/", ctx -> ctx.redirect("/public/index.html")); // Redirect til index.html i public-mappen
 
         app.start(port);
-        return app;
     }
 
     public static void stopServer(Javalin app) {

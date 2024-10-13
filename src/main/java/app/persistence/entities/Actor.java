@@ -6,7 +6,8 @@ import lombok.*;
 import java.util.Objects;
 import java.util.Set;
 
-@Data
+@Getter
+@Setter
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
@@ -20,7 +21,7 @@ public class Actor {
     @Column(name = "name", nullable = false)
     private String name;
 
-    @ManyToMany(mappedBy = "actors")
+    @ManyToMany(mappedBy = "actors", fetch = FetchType.EAGER)
     @ToString.Exclude
     @JsonBackReference // Denne forhindrer uendelige loops ved at stoppe serialisering her
     private Set<Movie> movies;

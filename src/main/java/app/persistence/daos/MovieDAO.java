@@ -9,14 +9,11 @@ import app.persistence.entities.Genre;
 import app.persistence.entities.Movie;
 import app.persistence.exceptions.JpaException;
 import jakarta.persistence.*;
-import app.persistence.config.HibernateConfig;
-import app.persistence.enums.HibernateConfigState;
 import java.util.*;
 import java.util.stream.Collectors;
 
 public class MovieDAO {
 
-    private static MovieDAO instance;
     private final EntityManager em;
     private final EntityManagerFactory emf;
 
@@ -55,7 +52,6 @@ public class MovieDAO {
             em.getTransaction().commit();
             return count;
         } catch (Exception e) {
-            e.printStackTrace();
             throw new JpaException("Der er opstået en fejl ved optælling af filmene i databasen.", e);
         }
     }
@@ -192,16 +188,33 @@ public class MovieDAO {
         }
         return deleted;
     }
-
-    // Metode til at søge efter film baseret på en del af titlen (case-insensitive)
     public List<Movie> searchMoviesByTitle(String searchString) {
         try (EntityManager em = emf.createEntityManager()) {
-            // Lav søgningen case-insensitive med LOWER() og brug LIKE til delmatch
-            TypedQuery<Movie> movies = em.createQuery("SELECT m FROM Movie m WHERE LOWER(m.originalTitle) LIKE LOWER(:searchString) ORDER BY m.releaseDate ASC", Movie.class);
-            movies.setParameter("searchString", "%" + searchString + "%");
-            return movies.getResultList();
+            String jpql = "SELECT m FROM Movie m WHERE LOWER(m.originalTitle) LIKE :searchString ORDER BY m.releaseDate ASC";
+            TypedQuery<Movie> query = em.createQuery(jpql, Movie.class);
+            String formattedSearchString = "%" + searchString.toLowerCase() + "%";
+            query.setParameter("searchString", formattedSearchString);
+
+            System.out.println("Søgestreng: " + formattedSearchString);
+
+            List<Movie> result = query.getResultList();
+
+            System.out.println("Hentede film: " + result.stream()
+                    .map(Movie::getOriginalTitle)
+                    .collect(Collectors.joining(", ")));
+
+            return result;
+        } catch (Exception e) {
+            // Log undtagelsen for at finde ud af, hvad der går galt
+            System.err.println("Fejl under søgning efter film: " + e.getMessage());
+            e.printStackTrace();
+            throw new RuntimeException("Database query failed", e); // Returnér mere specifik fejl
         }
     }
+
+
+
+
 
     // Få den gennemsnitlige rating af alle film
     public double getTotalAverageRating() {

@@ -16,9 +16,12 @@ public class MovieRoute {
     public MovieRoute(EntityManagerFactory emf) {
         this.emf = emf;
 
+        // Først initialiseres movieDAO, så den kan bruges til at initialisere movieService
+        movieDAO = new MovieDAO(emf);
         movieService = new MovieService(movieDAO);
         movieController = new MovieController(movieService);
     }
+
     // Her defineres alle endpoints for MovieController
     public EndpointGroup getMovieRoutes() {
         return () -> {

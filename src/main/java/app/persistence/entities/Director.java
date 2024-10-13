@@ -5,7 +5,8 @@ import jakarta.persistence.*;
 import lombok.*;
 import java.util.Set;
 
-@Data
+@Getter
+@Setter
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
@@ -20,7 +21,7 @@ public class Director {
     @Column(name = "name", nullable = true)
     private String name;
 
-    @OneToMany(mappedBy = "director")
+    @OneToMany(mappedBy = "director", fetch = FetchType.EAGER)
     @JsonIgnore
     @ToString.Exclude
     private Set<Movie> movies;

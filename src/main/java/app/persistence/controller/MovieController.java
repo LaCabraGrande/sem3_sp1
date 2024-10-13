@@ -19,11 +19,13 @@ public class MovieController {
     private static final Logger logger = LoggerFactory.getLogger(MovieController.class);
     private static EntityManagerFactory emf = HibernateConfig.getEntityManagerFactory("moviedb");
     private final MovieService movieService;
+    private final MovieDAO movieDAO;
 
     public MovieController(MovieService movieService) {
-        this.movieService = movieService;
+        this.movieDAO = new MovieDAO(emf);
+        this.movieService = new MovieService(movieDAO);
     }
-    private final MovieDAO movieDAO = new MovieDAO(emf);
+
     public void getAllMovies(Context ctx) {
         try {
             String pageParam = ctx.queryParam("page");
@@ -116,9 +118,30 @@ public class MovieController {
     }
 
     public void getMoviesByTitle(Context ctx) {
-        String title = ctx.pathParam("title");
-        System.out.println("Title: " + title);
-        List<Movie> movies = movieDAO.searchMoviesByTitle(title);
-        ctx.json(movies);
+        try {
+            String title = ctx.pathParam("title");
+            System.out.println("\nTitle som vi får fra mit API-kald i movies.http: " + title);
+            System.out.println("\n");
+
+            if (title == null || title.trim().isEmpty()) {
+                ctx.status(400).result("Title parameter is missing or empty");
+                return;
+            }
+
+            List<MovieDTO> movieDTOS = movieService.getMoviesByTitle(title);
+
+            if (movieDTOS.isEmpty()) {
+                ctx.status(404).result("No movies found with the title: " + title);
+            } else {
+                ctx.json(movieDTOS);
+            }
+
+        } catch (Exception e) {
+            // Log undtagelsen for at se hvad der går galt
+            logger.error("Error fetching movies by title: " + e.getMessage(), e);
+            ctx.status(500).result("An unexpected error occurred. Please try again later.");
+        }
     }
+
+
 }
