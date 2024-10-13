@@ -97,7 +97,7 @@ public class MovieService {
 
     public List<MovieDTO> getMoviesByTitle(String title) {
         return movieDAO.getAllMovies().stream()
-                .filter(movie -> movie.getTitle().toLowerCase().contains(title.toLowerCase()))
+                .filter(movie -> movie.getOriginalTitle().toLowerCase().contains(title.toLowerCase()))
                 .map(MovieDTO::new)
                 .collect(Collectors.toList());
     }

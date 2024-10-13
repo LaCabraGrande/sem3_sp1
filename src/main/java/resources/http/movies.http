@@ -1,51 +1,51 @@
 # Test for at hente alle film
-GET http://localhost:7074/api/all
+GET http://localhost:7070/api/movies/all
 Accept: application/json
 
 ###
 
 # Test for at hente film baseret på rating
-GET http://localhost:7074/api/rating/7
+GET http://localhost:7070/api/movies/rating/8
 Accept: application/json
 
 ###
 
 # Test for at hente film baseret på genre
-GET http://localhost:7074/api/genre/Action
+GET http://localhost:7070/api/movies/genre/Action
 Accept: application/json
 
 ###
 
 # Test for at hente film baseret på udgivelsesår
-GET http://localhost:7074/api/year/2022
+GET http://localhost:7070/api/year/2022
 Accept: application/json
 
 ###
 
 # Test for at hente en film baseret på IMDb ID
-GET http://localhost:7074/api/imdb/tt1234567
+GET http://localhost:7070/api/movies/imdb/tt1234567
 Accept: application/json
 
 ###
 
 # Test for at hente film baseret på instruktør
-GET http://localhost:7074/api/instructor/John%20Doe
+GET http://localhost:7070/api/movies/instructor/John%20Doe
 Accept: application/json
 
 ###
 
 # Test for at hente film baseret på skuespiller
-GET http://localhost:7074/api/actor/Actor%20Name
+GET http://localhost:7070/api/actor/Actor%20Name
 Accept: application/json
 
 ###
 
 # Test for at hente film baseret på titel
-GET http://localhost:7074/api/title/Some%20Movie%20Title
+GET http://localhost:7070/api/movies/title/Druk
 Accept: application/json
 
 ###
 
 # Test for at hente film med et minimum antal stemmer
-GET http://localhost:7074/api/minvotes/100
+GET http://localhost:7070/api/minvotes/100
 Accept: application/json

@@ -1,10 +1,13 @@
 package app.persistence.controller;
 
 import app.persistence.apis.MovieAPI;
+import app.persistence.config.HibernateConfig;
+import app.persistence.daos.MovieDAO;
 import app.persistence.dtos.MovieDTO;
 import app.persistence.entities.Movie;
 import app.persistence.services.MovieConverter;
 import io.javalin.http.Context;
+import jakarta.persistence.EntityManagerFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import app.persistence.services.MovieService;
@@ -14,12 +17,13 @@ import java.util.List;
 
 public class MovieController {
     private static final Logger logger = LoggerFactory.getLogger(MovieController.class);
+    private static EntityManagerFactory emf = HibernateConfig.getEntityManagerFactory("moviedb");
     private final MovieService movieService;
 
     public MovieController(MovieService movieService) {
         this.movieService = movieService;
     }
-
+    private final MovieDAO movieDAO = new MovieDAO(emf);
     public void getAllMovies(Context ctx) {
         try {
             String pageParam = ctx.queryParam("page");
@@ -113,7 +117,8 @@ public class MovieController {
 
     public void getMoviesByTitle(Context ctx) {
         String title = ctx.pathParam("title");
-        List<MovieDTO> movies = movieService.getMoviesByTitle(title);
+        System.out.println("Title: " + title);
+        List<Movie> movies = movieDAO.searchMoviesByTitle(title);
         ctx.json(movies);
     }
 }

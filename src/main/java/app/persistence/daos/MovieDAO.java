@@ -197,11 +197,9 @@ public class MovieDAO {
     public List<Movie> searchMoviesByTitle(String searchString) {
         try (EntityManager em = emf.createEntityManager()) {
             // Lav søgningen case-insensitive med LOWER() og brug LIKE til delmatch
-            return em.createQuery("SELECT m FROM Movie m WHERE LOWER(m.originalTitle) LIKE LOWER(:searchString) ORDER BY m.releaseDate ASC", Movie.class)
-
-                    // Bruger her '%' til at matche delstrenge
-                    .setParameter("searchString", "%" + searchString + "%")
-                    .getResultList();
+            TypedQuery<Movie> movies = em.createQuery("SELECT m FROM Movie m WHERE LOWER(m.originalTitle) LIKE LOWER(:searchString) ORDER BY m.releaseDate ASC", Movie.class);
+            movies.setParameter("searchString", "%" + searchString + "%");
+            return movies.getResultList();
         }
     }
 
