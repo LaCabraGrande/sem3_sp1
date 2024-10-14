@@ -15,6 +15,7 @@ import java.util.Properties;
  * Purpose: This class is used to configure Hibernate and create an EntityManagerFactory.
  * Author: Thomas Hartmann
  */
+
 public class HibernateConfig {
 
     private static EntityManagerFactory emf;
@@ -43,6 +44,7 @@ public class HibernateConfig {
             emfTest = createEMF(true,""); // No DB needed for test
         return emfTest;
     }
+
     // TODO: IMPORTANT: Add Entity classes here for them to be registered with Hibernate
     private static void getAnnotationConfiguration(Configuration configuration) {
         configuration.addAnnotatedClass(Movie.class);
@@ -59,13 +61,12 @@ public class HibernateConfig {
             setBaseProperties(props);
             if(forTest) {
                 props = setTestProperties(props);
+            } else if(System.getenv("DEPLOYED") != null) {
+                setDeployedProperties(props);
+            } else {
+                props = setDevProperties(props);
             }
-            else if(System.getenv("DEPLOYED") != null) {
-                setDeployedProperties(props, DBName);
-            }
-            else {
-                props = setDevProperties(props, DBName);
-            }
+
             configuration.setProperties(props);
             getAnnotationConfiguration(configuration);
 
@@ -86,22 +87,24 @@ public class HibernateConfig {
         props.put("hibernate.connection.driver_class", "org.postgresql.Driver");
         props.put("hibernate.hbm2ddl.auto", "update");
         props.put("hibernate.current_session_context_class", "thread");
-        props.put("hibernate.show_sql", "false"); // Deaktiver SQL visning
-        props.put("hibernate.format_sql", "false"); // Deaktiver formattering af SQL
-        props.put("hibernate.use_sql_comments", "false"); // Deaktiver SQL kommentarer
+        props.put("hibernate.show_sql", "true"); // Deaktiver SQL visning
+        props.put("hibernate.format_sql", "true"); // Deaktiver formattering af SQL
+        props.put("hibernate.use_sql_comments", "true"); // Deaktiver SQL kommentarer
         props.put("hibernate.logging.level", "WARN"); // Justerer logniveauet fra DEBUG til WARN
         props.put("org.hibernate.SQL", "WARN"); // Sæt logniveauet til WARN for SQL output
         props.put("org.hibernate.type.descriptor.sql.BasicBinder", "WARN"); // Undgå debug output fra type binder
         return props;
     }
 
-    private static Properties setDeployedProperties(Properties props, String DBName){
+    private static Properties setDeployedProperties(Properties props){
+        String DBName = System.getenv("DB_NAME");
         props.setProperty("hibernate.connection.url", System.getenv("CONNECTION_STR") + DBName);
         props.setProperty("hibernate.connection.username", System.getenv("DB_USERNAME"));
         props.setProperty("hibernate.connection.password", System.getenv("DB_PASSWORD"));
         return props;
     }
-    private static Properties setDevProperties(Properties props, String DBName){
+    private static Properties setDevProperties(Properties props){
+        String DBName = System.getenv("DB_NAME");
         props.put("hibernate.connection.url", "jdbc:postgresql://localhost:5432/"+ DBName);
         props.put("hibernate.connection.username", "postgres");
         props.put("hibernate.connection.password", "postgres");
