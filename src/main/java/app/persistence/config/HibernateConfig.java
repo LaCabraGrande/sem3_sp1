@@ -89,6 +89,7 @@ public class HibernateConfig {
         props.put("hibernate.show_sql", "false"); // Deaktiver SQL visning
         props.put("hibernate.format_sql", "false"); // Deaktiver formattering af SQL
         props.put("hibernate.use_sql_comments", "false"); // Deaktiver SQL kommentarer
+        props.put("hibernate.logging.level", "WARN"); // Justerer logniveauet
         return props;
     }
 
