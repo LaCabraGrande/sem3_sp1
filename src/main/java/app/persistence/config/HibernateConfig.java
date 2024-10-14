@@ -89,8 +89,9 @@ public class HibernateConfig {
         props.put("hibernate.show_sql", "false"); // Deaktiver SQL visning
         props.put("hibernate.format_sql", "false"); // Deaktiver formattering af SQL
         props.put("hibernate.use_sql_comments", "false"); // Deaktiver SQL kommentarer
-        props.put("hibernate.logging.level", "WARN"); // Juster logniveauet til WARN
-        props.put("org.eclipse.jetty.util.thread", "WARN"); // Skru ned for Jetty logging
+        props.put("hibernate.logging.level", "WARN"); // Justerer logniveauet fra DEBUG til WARN
+        props.put("org.hibernate.SQL", "WARN"); // Sæt logniveauet til WARN for SQL output
+        props.put("org.hibernate.type.descriptor.sql.BasicBinder", "WARN"); // Undgå debug output fra type binder
         return props;
     }
 
