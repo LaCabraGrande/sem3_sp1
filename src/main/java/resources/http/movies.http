@@ -17,25 +17,25 @@ Accept: application/json
 ###
 
 # Test for at hente film baseret på udgivelsesår
-GET http://localhost:7070/api/year/2022
+GET http://localhost:7070/api/movies/year/2022
 Accept: application/json
 
 ###
 
 # Test for at hente en film baseret på IMDb ID
-GET http://localhost:7070/api/movies/imdb/tt1234567
+GET http://localhost:7070/api/movies/imdb/833339
 Accept: application/json
 
 ###
 
 # Test for at hente film baseret på instruktør
-GET http://localhost:7070/api/movies/instructor/John%20Doe
+GET http://localhost:7070/api/movies/instructor/Thomas Vinterberg
 Accept: application/json
 
 ###
 
 # Test for at hente film baseret på skuespiller
-GET http://localhost:7070/api/actor/Actor%20Name
+GET http://localhost:7070/api/movies/actor/Lars Ranthe
 Accept: application/json
 
 ###
@@ -47,5 +47,5 @@ Accept: application/json
 ###
 
 # Test for at hente film med et minimum antal stemmer
-GET http://localhost:7070/api/minvotes/100
+GET http://localhost:7070/api/movies/minvotes/100
 Accept: application/json

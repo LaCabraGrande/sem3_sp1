@@ -7,7 +7,8 @@ import java.util.stream.Collectors;
 
 @NoArgsConstructor
 @AllArgsConstructor
-@Data
+@Getter
+@Setter
 @Builder
 public class ActorDTO {
     private Long id;
@@ -26,5 +27,6 @@ public class ActorDTO {
                 .map(movie -> movie.getTitle())
                 .collect(Collectors.toSet());
     }
+
 }
 

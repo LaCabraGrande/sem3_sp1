@@ -81,7 +81,7 @@ public class MovieController {
     }
 
     public void getMoviesByInstructor(Context ctx) {
-        String instructor = ctx.pathParam("instructor");
+         String instructor = ctx.pathParam("instructor");
 
         List<MovieDTO> movies = movieService.getMoviesByInstructor(instructor);
 
@@ -95,27 +95,16 @@ public class MovieController {
             List<MovieDTO> moviesOfActor = movieService.getMoviesByActor(actorName);
 
             if (moviesOfActor.isEmpty()) {
-                ctx.status(404).result("Der blev ikke fundet nogle film med skuespilleren: " + actorName);
+                ctx.status(404).result("No movies found with the actor: " + actorName);
             } else {
-                // Filtrering af film med gyldige release datoer og sortering
-                List<Movie> sortedMovies = moviesOfActor.stream()
-                        .filter(movieDTO -> movieDTO.getReleaseDate() != null && movieDTO.getReleaseDate().length() >= 4)
-                        .sorted(Comparator.comparing(movieDTO -> movieDTO.getReleaseDate().substring(0, 4))) // Sorter efter år
-                        .map(MovieConverter::convertToMovie) // Konverter til Movie-entitet
-                        .toList();
-
-                // Konvertering til MovieAPI
-                List<MovieAPI> movieAPIS = sortedMovies.stream()
-                        .map(MovieConverter::convertToMovieAPI)
-                        .toList();
-
-                ctx.contentType("application/json");
-                ctx.json(movieAPIS); // Sender JSON responsen tilbage
+                ctx.json(moviesOfActor);
             }
         } catch (Exception e) {
-            ctx.status(500).result("Fejl ved konvertering af film til JSON: " + e.getMessage());
+            logger.error("Error fetching movies by actor: " + e.getMessage(), e);
+            ctx.status(500).result("An unexpected error occurred. Please try again later.");
         }
     }
+
 
     public void getMoviesByTitle(Context ctx) {
         try {

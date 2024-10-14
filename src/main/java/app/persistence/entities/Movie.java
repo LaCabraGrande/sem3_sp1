@@ -3,6 +3,8 @@ package app.persistence.entities;
 import com.fasterxml.jackson.annotation.JsonManagedReference;
 import jakarta.persistence.*;
 import lombok.*;
+
+import java.util.HashSet;
 import java.util.Objects;
 import java.util.Set;
 
@@ -67,9 +69,9 @@ public class Movie {
     )
     @ToString.Exclude
     @JsonManagedReference
-    private Set<Genre> genres;
+    private Set<Genre> genres = new HashSet<>();
 
-    @ManyToOne(optional = true)
+    @ManyToOne(optional = true, fetch = FetchType.EAGER)
     @JoinColumn(name = "director_id", referencedColumnName = "id")
     @ToString.Exclude
     private Director director;
@@ -82,7 +84,7 @@ public class Movie {
     )
     @JsonManagedReference
     @ToString.Exclude
-    private Set<Actor> actors;
+    private Set<Actor> actors = new HashSet<>();
 
     @Override
     public boolean equals(Object o) {

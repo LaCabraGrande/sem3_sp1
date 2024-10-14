@@ -6,6 +6,7 @@ import app.persistence.entities.Movie;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
 import java.util.stream.Collectors;
 import app.persistence.apis.MovieAPI;
@@ -43,13 +44,14 @@ public class MovieService {
                 .collect(Collectors.toList());
     }
 
-    // Returnerer en liste af Movies af en angiven genre
     public List<MovieDTO> getMoviesByGenre(String genreName) {
         return movieDAO.getAllMovies().stream()
-                .filter(movie -> movie.getGenres().contains(genreName))
+                .filter(movie -> movie.getGenres().stream()
+                        .anyMatch(genre -> genre.getName().equalsIgnoreCase(genreName)))
                 .map(MovieDTO::new)
                 .collect(Collectors.toList());
     }
+
 
     // Returnerer en liste af film fra det angivne år
     public List<MovieDTO> getMoviesFromYear(int year) {
@@ -85,17 +87,28 @@ public class MovieService {
 
     public List<MovieDTO> getMoviesByInstructor(String instructor) {
         return movieDAO.getAllMovies().stream()
-                .filter(movie -> movie.getDirector() != null && movie.getDirector().getName().equals(instructor))
+                .filter(movie -> movie.getDirector() != null && movie.getDirector().getName() != null
+                        && movie.getDirector().getName().equals(instructor))
                 .map(MovieDTO::new)
                 .collect(Collectors.toList());
     }
 
     public List<MovieDTO> getMoviesByActor(String actor) {
         return movieDAO.getAllMovies().stream()
-                .filter(movie -> movie.getActors().stream().anyMatch(actorDTO -> actorDTO.getName().equals(actor)))
-                .map(MovieDTO::new)
+                .filter(movie -> movie.getActors() != null &&
+                        movie.getActors().stream().anyMatch(actorDTO -> actorDTO.getName().equalsIgnoreCase(actor)))
+                .map(movie -> {
+                    // Kontroller for null og initialiser hvis nødvendigt
+                    if (movie.getGenres() == null) {
+                        movie.setGenres(new HashSet<>()); // eller returner en tom set
+                    }
+                    return new MovieDTO(movie);
+                })
                 .collect(Collectors.toList());
     }
+
+
+
 
     public List<MovieDTO> getMoviesByTitle(String title) {
         // Hent filmene fra DAO

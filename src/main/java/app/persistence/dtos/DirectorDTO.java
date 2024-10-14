@@ -7,7 +7,8 @@ import java.util.stream.Collectors;
 
 @NoArgsConstructor
 @AllArgsConstructor
-@Data
+@Setter
+@Getter
 @Builder
 public class DirectorDTO {
     private Long id;
@@ -20,7 +21,11 @@ public class DirectorDTO {
     {
         this.id = director.getId();
         this.name = director.getName();
-        this.movieIds = director.getMovies().stream().map(movie -> movie.getId()).collect(Collectors.toSet());
-        this.movieTitles = director.getMovies().stream().map(movie -> movie.getTitle()).collect(Collectors.toSet());
+        this.movieIds = director.getMovies().stream()
+                .map(movie -> movie.getId())
+                .collect(Collectors.toSet());
+        this.movieTitles = director.getMovies().stream()
+                .map(movie -> movie.getTitle())
+                .collect(Collectors.toSet());
     }
 }
