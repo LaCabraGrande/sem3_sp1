@@ -23,6 +23,6 @@
     <logger name="org.eclipse.jetty" level="warn" /> <!-- Reducer logniveau for Jetty til WARN -->
     <logger name="org.hibernate" level="warn" /> <!-- Reducer logniveau for Hibernate til WARN -->
     <logger name="org.jboss.logging" level="warn" /> <!-- Reducer logniveau for JBoss logging til WARN -->
-    <logger name="app" level="info" /> <!-- Behold din app logniveau som INFO -->
+    <logger name="app" level="warn" /> <!-- Behold din app logniveau som INFO -->
 
 </configuration>
