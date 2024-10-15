@@ -1,0 +1,102 @@
+### Environments: dev
+GET {{url}}
+
+### A simple get request to the test endpoint. No need for login
+GET {{url}}/auth/test/
+
+### Create a new user - this one will only get a USER role by default
+POST {{url}}/auth/register/
+
+{
+    "username": "user",
+    "password": "test123"
+}
+
+###
+POST {{url}}/auth/login/
+
+{
+    "username": "user",
+    "password": "test123"
+}
+
+> {%
+    client.global.set("jwt_token", response.body.token);
+    console.log("JWT Token:", client.global.get("jwt_token"));
+%}
+
+###
+GET {{url}}/protected/user_demo/
+Accept: application/json
+Authorization: Bearer {{jwt_token}}
+
+###
+GET {{url}}/protected/admin_demo/
+Accept: application/json
+Authorization: Bearer {{jwt_token}}
+
+### Add admin role to user
+POST {{url}}/auth/user/addrole/
+Accept: application/json
+Authorization: Bearer {{jwt_token}}
+
+{
+    "role": "ADMIN"
+}
+Accept: application/json
+Authorization: Bearer {{jwt_token}}
+
+###
+
+# Test for at hente alle film
+GET {{url}}/api/movies/all
+Accept: application/json
+
+###
+
+# Test for at hente film baseret på rating
+GET {{url}}/api/movies/rating/8
+Accept: application/json
+
+###
+
+# Test for at hente film baseret på genre
+GET {{url}}/api/movies/genre/Action
+Accept: application/json
+
+###
+
+# Test for at hente film baseret på udgivelsesår
+GET {{url}}/api/movies/year/2022
+Accept: application/json
+
+###
+
+# Test for at hente en film baseret på IMDb ID
+GET {{url}}/api/movies/imdb/833339
+Accept: application/json
+
+###
+
+# Test for at hente film baseret på instruktør
+GET {{url}}/movies/instructor/Thomas Vinterberg
+Accept: application/json
+
+###
+
+# Test for at hente film baseret på skuespiller
+GET {{url}}/api/movies/actor/Lars Ranthe
+Accept: application/json
+
+###
+
+# Test for at hente film baseret på titel
+GET {{url}}/api/movies/title/Druk
+Accept: application/json
+
+###
+
+# Test for at hente film med et minimum antal stemmer
+GET {{url}}/api/movies/minvotes/100
+Accept: application/json
+
