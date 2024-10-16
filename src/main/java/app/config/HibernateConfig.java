@@ -86,9 +86,9 @@ public class HibernateConfig {
         props.put("hibernate.connection.driver_class", "org.postgresql.Driver");
         props.put("hibernate.hbm2ddl.auto", "update");
         props.put("hibernate.current_session_context_class", "thread");
-        props.put("hibernate.show_sql", "true"); // Deaktiver SQL visning
-        props.put("hibernate.format_sql", "true"); // Deaktiver formattering af SQL
-        props.put("hibernate.use_sql_comments", "true"); // Deaktiver SQL kommentarer
+        props.put("hibernate.show_sql", "false"); // Deaktiver SQL visning
+        props.put("hibernate.format_sql", "false"); // Deaktiver formattering af SQL
+        props.put("hibernate.use_sql_comments", "false"); // Deaktiver SQL kommentarer
         return props;
     }
 

@@ -29,6 +29,20 @@ public class MovieDAO {
         return instance;
     }
 
+    public boolean hasMovies() {
+        try (EntityManager em = emf.createEntityManager()) {
+            em.getTransaction().begin(); // Start transaktion
+            long count = em.createQuery("SELECT COUNT(m) FROM Movie m", Long.class).getSingleResult();
+            em.getTransaction().commit(); // Commit transaktion
+            return count > 0;
+        } catch (Exception e) {
+            e.printStackTrace(); // Logge fejlen
+            throw new JpaException("An error occurred while checking for existing movies", e);
+        }
+    }
+
+
+
     // Metode til at finde en film baseret på id
     public MovieDTO findById(Long id) {
         try (EntityManager em = emf.createEntityManager()) {
@@ -233,10 +247,6 @@ public class MovieDAO {
         }
     }
 
-
-
-
-
     // Få den gennemsnitlige rating af alle film
     public double getTotalAverageRating() {
         try (EntityManager em = emf.createEntityManager()) {
@@ -319,14 +329,19 @@ public class MovieDAO {
         }
     }
 
-    public void createNewMovie(Movie movie) {
-        if (movie == null) {
-            throw new IllegalArgumentException("Movie cannot be null");
+    public void createNewMovie(MovieDTO movieDTO) {
+        if (movieDTO == null) {
+            throw new IllegalArgumentException("MovieDTO cannot be null");
         }
+
         EntityManager em = emf.createEntityManager();
         try (em) {
             em.getTransaction().begin();
 
+            // Konverter MovieDTO til en Movie-entitet
+            Movie movie = new Movie(movieDTO);
+
+            // Håndter director
             Director director = movie.getDirector();
             if (director != null) {
                 TypedQuery<Director> query = em.createQuery(
@@ -342,12 +357,13 @@ public class MovieDAO {
                 }
             }
 
+            // Håndter genres
             if (movie.getGenres() != null) {
                 Set<Genre> mergedGenres = new HashSet<>();
                 for (Genre genre : movie.getGenres()) {
                     TypedQuery<Genre> query = em.createQuery(
                             "SELECT g FROM Genre g WHERE g.genreId = :genreId", Genre.class);
-                    query.setParameter("genreId", genre.getGenreId());
+                    query.setParameter("genreId", genre.getId());
 
                     try {
                         Genre existingGenre = query.getSingleResult();
@@ -360,6 +376,7 @@ public class MovieDAO {
                 movie.setGenres(mergedGenres);
             }
 
+            // Håndter actors
             if (movie.getActors() != null) {
                 Set<Actor> mergedActors = new HashSet<>();
                 for (Actor actor : movie.getActors()) {
@@ -368,6 +385,8 @@ public class MovieDAO {
                 }
                 movie.setActors(mergedActors);
             }
+
+            // Persist movie entity
             em.persist(movie);
             em.getTransaction().commit();
         } catch (Exception e) {
@@ -375,9 +394,10 @@ public class MovieDAO {
                 em.getTransaction().rollback();
             }
             e.printStackTrace();
-            throw new JpaException("Der er opstået en fejl ved opretning af filmen: " + movie.getTitle(), e);
+            throw new JpaException("Der opstod en fejl ved oprettelsen af filmen: " + movieDTO.getTitle(), e);
         }
     }
+
 
     public void create(Movie movie) {
         if (movie == null) {

@@ -9,41 +9,53 @@ import java.util.Set;
 public class GenreDAO {
 
     private static GenreDAO instance;
-    private final EntityManager em;
-    private final EntityManagerFactory emf;
+    private static EntityManagerFactory emf;
 
-    public GenreDAO(EntityManagerFactory emf) {
-        this.emf = emf;
-        em = emf.createEntityManager();
+    public static GenreDAO getInstance(EntityManagerFactory _emf) {
+        if (instance == null) {
+            emf = _emf;
+            instance = new GenreDAO();
+        }
+        return instance;
     }
 
-    public Genre findById(Long id)
-    {
-        return em.find(Genre.class, id);
+
+
+
+    public Genre findById(Long id) {
+        try (EntityManager em = emf.createEntityManager()) {
+            return em.find(Genre.class, id);
+        } catch (Exception e) {
+            throw new JpaException("An error occurred while fetching genre by id", e);
+        }
     }
 
     public Genre update(Genre genre) {
-        EntityTransaction transaction = em.getTransaction();
-        try (EntityManager em = emf.createEntityManager()) {
-            em.getTransaction().begin();
-            Genre updatedGenre = em.merge(genre);
-            em.getTransaction().commit();
-            return updatedGenre;
-        } catch (Exception e) {
-            transaction.rollback();
-            throw new JpaException("An error occurred while updating genre", e);
+         try (EntityManager em = emf.createEntityManager()) {
+            EntityTransaction transaction = em.getTransaction();
+            try {
+                em.getTransaction().begin();
+                Genre updatedGenre = em.merge(genre);
+                em.getTransaction().commit();
+                return updatedGenre;
+            } catch (Exception e) {
+                transaction.rollback();
+                throw new JpaException("An error occurred while updating genre", e);
+            }
         }
     }
 
     public void create(Genre genre) {
-        EntityTransaction transaction = em.getTransaction();
         try (EntityManager em = emf.createEntityManager()) {
-            em.getTransaction().begin();
-            em.persist(genre);
-            em.getTransaction().commit();
-        } catch (Exception e) {
-            transaction.rollback();
-            throw new JpaException("An error occurred while creating genre", e);
+            EntityTransaction transaction = em.getTransaction();
+            try {
+                em.getTransaction().begin();
+                em.persist(genre);
+                em.getTransaction().commit();
+            } catch (Exception e) {
+                transaction.rollback();
+                throw new JpaException("An error occurred while creating genre", e);
+            }
         }
     }
 
