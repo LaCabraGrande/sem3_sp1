@@ -1,8 +1,9 @@
 package app.entities;
 
-import com.fasterxml.jackson.annotation.JsonBackReference;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.*;
+
 import java.util.Objects;
 import java.util.Set;
 
@@ -14,6 +15,7 @@ import java.util.Set;
 @Entity
 @Table(name = "actor")
 public class Actor {
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
@@ -21,15 +23,24 @@ public class Actor {
     @Column(name = "name", nullable = false)
     private String name;
 
-    @ManyToMany(mappedBy = "actors", fetch = FetchType.EAGER)
+    @ManyToMany(mappedBy = "actors", fetch = FetchType.LAZY)
     @ToString.Exclude
-    @JsonBackReference // Denne forhindrer uendelige loops ved at stoppe serialisering her
+    @JsonIgnore // Undgå problemer ved lazy-loading i JSON
     private Set<Movie> movies;
 
     @Transient
     private Set<Long> movieIds;
+
     @Transient
     private Set<String> movieTitles;
+
+    // DTO-baseret constructor
+    public Actor(app.dtos.ActorDTO dto) {
+        this.id = dto.getId();
+        this.name = dto.getName();
+        this.movieIds = dto.getMovieIds();
+        this.movieTitles = dto.getMovieTitles();
+    }
 
     @Override
     public boolean equals(Object o) {
@@ -44,4 +55,3 @@ public class Actor {
         return Objects.hash(id);
     }
 }
-

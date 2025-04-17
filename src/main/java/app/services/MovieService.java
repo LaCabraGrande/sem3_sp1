@@ -40,12 +40,20 @@ public class MovieService {
     }
 
     // Returnerer en liste af film med en angiven rating
+//    public List<MovieDTO> getMoviesByRating(double rating) {
+//        return movieDAO.getAllMovies().stream()
+//                .filter(movie -> movie.getVoteAverage() == rating)
+//                .map(MovieDTO::new)
+//                .collect(Collectors.toList());
+//    }
+
     public List<MovieDTO> getMoviesByRating(double rating) {
-        return movieDAO.getAllMovies().stream()
+        return movieDAO.getAllMoviesWithRelations().stream()
                 .filter(movie -> movie.getVoteAverage() == rating)
                 .map(MovieDTO::new)
                 .collect(Collectors.toList());
     }
+
 
     public List<MovieDTO> getMoviesByGenre(String genreName) {
         return movieDAO.getAllMovies().stream()
@@ -81,11 +89,8 @@ public class MovieService {
     }
 
     public MovieDTO getMovieByImdbId(String imdbId) {
-        Movie movie = movieDAO.findByImdbId(Long.valueOf(imdbId));
-        if (movie != null) {
-            return new MovieDTO(movie);
-        }
-        return null;
+        MovieDTO movieDTO = movieDAO.findByImdbId(Long.valueOf(imdbId));
+        return movieDTO;
     }
 
     public List<MovieDTO> getMoviesByInstructor(String instructor) {
@@ -110,27 +115,22 @@ public class MovieService {
                 .collect(Collectors.toList());
     }
 
-
-
-
-    public List<MovieDTO> getMoviesByTitle(String title) {
-        // Hent filmene fra DAO
-        List<Movie> movies = movieDAO.searchMoviesByTitle(title);
-
-        // Tjekker om listen er null eller tom
-        if (movies == null || movies.isEmpty()) {
-            // Log en besked eller håndter tilfælde uden fundne film
-            System.out.println("\nIngen film fundet med titlen: " + title+"\n");
-            return Collections.emptyList(); // Returnerer en tom liste
-        }
-
-        // Konverterer Movie objekter til MovieDTO
-        return movies.stream()
-                .map(MovieDTO::new)
-                .collect(Collectors.toList());
-    }
-
-
+//    public List<MovieDTO> getMoviesByTitle(String title) {
+//        // Hent filmene fra DAO
+//        List<Movie> movies = movieDAO.getMoviesByTitle(title);
+//
+//        // Tjekker om listen er null eller tom
+//        if (movies == null || movies.isEmpty()) {
+//            // Log en besked eller håndter tilfælde uden fundne film
+//            System.out.println("\nIngen film fundet med titlen: " + title+"\n");
+//            return Collections.emptyList(); // Returnerer en tom liste
+//        }
+//
+//        // Konverterer Movie objekter til MovieDTO
+//        return movies.stream()
+//                .map(MovieDTO::new)
+//                .collect(Collectors.toList());
+//    }
 
     // Konverterer en liste af MovieAPIs til en JSON-String som returneres
     public String convertMoviesToJson(List<MovieAPI> movieAPIs) throws Exception {

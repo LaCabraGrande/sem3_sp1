@@ -1,8 +1,10 @@
 package app.entities;
 
+import app.dtos.GenreDTO;
 import com.fasterxml.jackson.annotation.JsonBackReference;
 import jakarta.persistence.*;
 import lombok.*;
+
 import java.util.Objects;
 import java.util.Set;
 
@@ -25,10 +27,15 @@ public class Genre {
     @Column(name = "name", nullable = false)
     private String name;
 
-    @ManyToMany(mappedBy = "genres", fetch = FetchType.EAGER)
+    @ManyToMany(mappedBy = "genres", fetch = FetchType.LAZY)
     @JsonBackReference
     @ToString.Exclude
     private Set<Movie> movies;
+
+    public Genre(GenreDTO dto) {
+        this.genreId = dto.getGenreId();
+        this.name = dto.getName();
+    }
 
     @Override
     public boolean equals(Object o) {

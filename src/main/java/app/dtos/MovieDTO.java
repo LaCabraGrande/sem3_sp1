@@ -1,8 +1,11 @@
 package app.dtos;
 
+import app.entities.Genre;
 import app.entities.Movie;
 import lombok.*;
+
 import java.util.List;
+import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -10,8 +13,6 @@ import java.util.stream.Collectors;
 @AllArgsConstructor
 @Data
 @Builder
-@Setter
-@ToString
 public class MovieDTO {
     private Long databaseId;
     private Long imdbId;
@@ -27,6 +28,7 @@ public class MovieDTO {
     private String originalTitle;
     private Double voteAverage;
     private Integer voteCount;
+
     private Set<Integer> genreIds;
     private List<String> genreNames;
 
@@ -48,15 +50,31 @@ public class MovieDTO {
         this.originalTitle = movie.getOriginalTitle();
         this.voteAverage = movie.getVoteAverage();
         this.voteCount = movie.getVoteCount();
-        this.genreIds = movie.getGenres().stream()
-                .map(genre -> genre.getId().intValue())
-                .collect(Collectors.toSet());
-        this.genreNames = movie.getGenres().stream()
-                .map(genre -> genre.getName())
-                .collect(Collectors.toList());
-        this.actors = movie.getActors().stream()
-                .map(ActorDTO::new)
-                .collect(Collectors.toSet());
-        this.director = movie.getDirector() != null ? new DirectorDTO(movie.getDirector()) : null;
+
+        // Genrer
+        if (movie.getGenres() != null) {
+            this.genreIds = movie.getGenres().stream()
+                    .filter(Objects::nonNull)
+                    .map(Genre::getGenreId)
+                    .collect(Collectors.toSet());
+
+            this.genreNames = movie.getGenres().stream()
+                    .filter(Objects::nonNull)
+                    .map(Genre::getName)
+                    .collect(Collectors.toList());
+        }
+
+        // Skuespillere
+        if (movie.getActors() != null) {
+            this.actors = movie.getActors().stream()
+                    .filter(Objects::nonNull)
+                    .map(ActorDTO::new)
+                    .collect(Collectors.toSet());
+        }
+
+        // Instruktør
+        if (movie.getDirector() != null) {
+            this.director = new DirectorDTO(movie.getDirector());
+        }
     }
 }

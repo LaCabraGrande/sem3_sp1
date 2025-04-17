@@ -13,13 +13,13 @@ import app.services.MovieService;
 import java.util.List;
 
 public class MovieController {
-    private MovieDAO dao;
-    private MovieService movieService = new MovieService();
+    private final MovieDAO movieDAO;
+    private final MovieService movieService = new MovieService();
     private static final Logger logger = LoggerFactory.getLogger(MovieController.class);
 
     public MovieController() {
         EntityManagerFactory emf = HibernateConfig.getEntityManagerFactory();
-        this.dao = MovieDAO.getInstance(emf);
+        this.movieDAO = MovieDAO.getInstance(emf);
     }
 
     public void getAllMovies(Context ctx) {
@@ -44,8 +44,8 @@ public class MovieController {
 
     public void getMoviesByRating(Context ctx) {
         double rating = Double.parseDouble(ctx.pathParam("rating"));
-        List<MovieDTO> movies = movieService.getMoviesByRating(rating);
-        ctx.json(movies);
+        List<MovieDTO> movieDTOS = movieService.getMoviesByRating(rating);
+        ctx.json(movieDTOS);
     }
 
     public void getMoviesByGenre(Context ctx) {
@@ -96,7 +96,7 @@ public class MovieController {
                 ctx.json(moviesOfActor);
             }
         } catch (Exception e) {
-            logger.error("Error fetching movies by actor: " + e.getMessage(), e);
+            logger.error("Error fetching movies by actor: {}", e.getMessage(), e);
             ctx.status(500).result("An unexpected error occurred. Please try again later.");
         }
     }
@@ -108,12 +108,13 @@ public class MovieController {
             System.out.println("\nTitle som vi får fra mit API-kald i movies.http: " + title);
             System.out.println("\n");
 
-            if (title == null || title.trim().isEmpty()) {
+            if (title.trim().isEmpty()) {
                 ctx.status(400).result("Title parameter is missing or empty");
                 return;
             }
 
-            List<MovieDTO> movieDTOS = movieService.getMoviesByTitle(title);
+            //List<MovieDTO> movieDTOS = movieDAO.getMoviesByTitle(title);
+            List<MovieDTO> movieDTOS = movieDAO.getMoviesByTitle(title);
 
             if (movieDTOS.isEmpty()) {
                 ctx.status(404).result("No movies found with the title: " + title);
@@ -123,7 +124,7 @@ public class MovieController {
 
         } catch (Exception e) {
             // Log undtagelsen for at se hvad der går galt
-            logger.error("Error fetching movies by title: " + e.getMessage(), e);
+            logger.error("Error fetching movies by title: {}", e.getMessage(), e);
             ctx.status(500).result("An unexpected error occurred. Please try again later.");
         }
     }

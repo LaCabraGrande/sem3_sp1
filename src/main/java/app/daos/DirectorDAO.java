@@ -14,27 +14,31 @@ import java.util.stream.Collectors;
 public class DirectorDAO {
 
     private static DirectorDAO instance;
-    private final EntityManager em;
-    private final EntityManagerFactory emf;
+    private static EntityManagerFactory emf;
 
-    public  DirectorDAO(EntityManagerFactory emf) {
-        this.emf = emf;
-        em = emf.createEntityManager();
+    public static DirectorDAO getInstance(EntityManagerFactory _emf) {
+        if (instance == null) {
+            emf = _emf;
+            instance = new DirectorDAO();
+        }
+        return instance;
     }
 
     public void create(DirectorDTO dto) {
         try (EntityManager em = emf.createEntityManager()) {
-            em.getTransaction().begin();
-            Director director = new Director();
-            director.setId(dto.getId());
-            director.setName(dto.getName());
-            em.persist(director);
-            em.getTransaction().commit();
-        } catch (Exception e) {
-            if (em.getTransaction().isActive()) {
-                em.getTransaction().rollback();
+            try {
+                em.getTransaction().begin();
+                Director director = new Director();
+                director.setId(dto.getId());
+                director.setName(dto.getName());
+                em.persist(director);
+                em.getTransaction().commit();
+            } catch (Exception e) {
+                if (em.getTransaction().isActive()) {
+                    em.getTransaction().rollback();
+                }
+                throw new JpaException("Der opstod en fejl under oprettelse af en instruktør", e);
             }
-            throw new JpaException("Der opstod en fejl under oprettelse af en instruktør", e);
         }
     }
 
@@ -71,7 +75,7 @@ public class DirectorDAO {
     }
 
     public Director findDirectorById(Long id) {
-        try {
+        try (EntityManager em = emf.createEntityManager()) {
             return em.find(Director.class, id);
         } catch (Exception e) {
             throw new JpaException("Der opstod en fejl under søgning efter en instruktør", e);
@@ -83,23 +87,21 @@ public class DirectorDAO {
     }
 
     public void update(DirectorDTO dto) {
-        EntityManager em = emf.createEntityManager();
-        EntityTransaction transaction = em.getTransaction();
-        try {
-            transaction.begin();
-            Director director = em.find(Director.class, dto.getId());
-            if (director != null) {
-                director.setName(dto.getName());
-                em.merge(director);
+        try (EntityManager em = emf.createEntityManager()) {
+            try {
+                em.getTransaction().begin();
+                Director director = em.find(Director.class, dto.getId());
+                if (director != null) {
+                    director.setName(dto.getName());
+                    em.merge(director);
+                }
+                em.getTransaction().commit();
+            } catch (Exception e) {
+                if (em.getTransaction().isActive()) {
+                    em.getTransaction().rollback();
+                }
+                throw new JpaException("Der opstod en fejl under opdatering af en instruktør", e);
             }
-            transaction.commit();
-        } catch (Exception e) {
-            if (transaction.isActive()) {
-                transaction.rollback();
-            }
-            throw new JpaException("Der opstod en fejl under opdatering af en instruktør", e);
-        } finally {
-            em.close();
         }
     }
 

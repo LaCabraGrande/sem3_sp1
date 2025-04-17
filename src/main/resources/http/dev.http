@@ -55,7 +55,7 @@ Accept: application/json
 ###
 
 # Test for at hente film baseret på rating
-GET {{url}}/api/movies/rating/8
+GET {{url}}/api/movies/rating/7
 Accept: application/json
 
 ###
