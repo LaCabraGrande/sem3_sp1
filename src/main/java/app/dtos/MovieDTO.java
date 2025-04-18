@@ -77,4 +77,29 @@ public class MovieDTO {
             this.director = new DirectorDTO(movie.getDirector());
         }
     }
+
+    public int getReleaseYear() {
+        if (releaseDate != null && releaseDate.length() >= 4) {
+            try {
+                return Integer.parseInt(releaseDate.substring(0, 4));
+            } catch (NumberFormatException e) {
+                return 0;
+            }
+        }
+        return 0;
+    }
+
+    public String getDirectorName() {
+        return director != null ? director.getName() : "";
+    }
+
+    public List<String> getActorNames() {
+        return actors != null
+                ? actors.stream().map(ActorDTO::getName).collect(Collectors.toList())
+                : List.of();
+    }
+
+    public double getRating() {
+        return voteAverage != null ? voteAverage : 0.0;
+    }
 }

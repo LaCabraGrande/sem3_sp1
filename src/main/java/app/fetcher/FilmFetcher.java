@@ -60,7 +60,7 @@ public class FilmFetcher {
     public List<MovieDTO> fetchMoviesFromLastTenYears() throws IOException, InterruptedException {
         List<MovieDTO> allMovies = new ArrayList<>();
         int currentYear = LocalDate.now().getYear();
-        int startYear = currentYear - 10;
+        int startYear = currentYear - 55;
 
         for (int year = startYear; year <= currentYear; year++) {
             LocalDate fromDate = LocalDate.of(year, 1, 1);
@@ -135,7 +135,7 @@ public class FilmFetcher {
                     }
                     if (index % 1000 == 0) {
                         System.out.println("⏸️ Pause 5 sekunder efter " + index + " detaljer...");
-                        Thread.sleep(5_000);
+                        Thread.sleep(5000);
                     }
                     Thread.sleep(20); // buffer
                 } catch (IOException | InterruptedException e) {

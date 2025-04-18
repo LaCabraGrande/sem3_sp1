@@ -86,19 +86,27 @@ public class HibernateConfig {
         props.put("hibernate.connection.driver_class", "org.postgresql.Driver");
         props.put("hibernate.hbm2ddl.auto", "create");
         props.put("hibernate.current_session_context_class", "thread");
-        props.put("hibernate.show_sql", "false"); // Deaktiver SQL visning
-        props.put("hibernate.format_sql", "false"); // Deaktiver formattering af SQL
-        props.put("hibernate.use_sql_comments", "false"); // Deaktiver SQL kommentarer
+        props.put("hibernate.show_sql", "false");
+        props.put("hibernate.format_sql", "false");
+        props.put("hibernate.use_sql_comments", "false");
+
         return props;
     }
 
+
     private static Properties setDeployedProperties(Properties props) {
         String DBName = System.getenv("DB_NAME");
+
+        // 🔍 Debug-udskrift til at tjekke om miljøvariablerne virker
+        System.out.println("Connection string: " + System.getenv("CONNECTION_STR") + DBName);
+        System.out.println("Bruger: " + System.getenv("DB_USERNAME"));
+
         props.setProperty("hibernate.connection.url", System.getenv("CONNECTION_STR") + DBName);
         props.setProperty("hibernate.connection.username", System.getenv("DB_USERNAME"));
         props.setProperty("hibernate.connection.password", System.getenv("DB_PASSWORD"));
         return props;
     }
+
 
     private static Properties setDevProperties(Properties props) {
         String DBName = Utils.getPropertyValue("DB_NAME", "config.properties");
