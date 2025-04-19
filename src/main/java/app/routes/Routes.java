@@ -2,12 +2,14 @@ package app.routes;
 
 import io.javalin.apibuilder.EndpointGroup;
 import static io.javalin.apibuilder.ApiBuilder.*;
-import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.Locale;
 import java.util.Map;
 import java.time.Duration;
 import java.time.Instant;
+import java.time.ZonedDateTime;
+import java.time.ZoneId;
+
 
 public class Routes {
     private final MovieRoute movieRoute = new MovieRoute();
@@ -16,8 +18,8 @@ public class Routes {
     public EndpointGroup getRoutes() {
         return () -> {
             get("health", ctx -> {
-                String timestamp = LocalDateTime.now()
-                        .format(DateTimeFormatter.ofPattern("EEEE, dd MMMM yyyy 'at' HH:mm", Locale.ENGLISH));
+                ZonedDateTime now = ZonedDateTime.now(ZoneId.of("Europe/Copenhagen"));
+                String timestamp = now.format(DateTimeFormatter.ofPattern("EEEE, dd MMMM yyyy 'at' HH:mm", Locale.ENGLISH));
 
                 Duration uptime = Duration.between(serverStart, Instant.now());
                 long hours = uptime.toHours();
@@ -30,6 +32,7 @@ public class Routes {
                         "status", "running",
                         "service", "Movie Database API-backend",
                         "timestamp", timestamp,
+                        "timezone", now.getZone().toString(), // 👈 tilføjet
                         "uptime", uptimeFormatted
                 ));
             });
