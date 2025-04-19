@@ -13,7 +13,7 @@ import java.time.ZoneId;
 
 public class Routes {
     private final MovieRoute movieRoute = new MovieRoute();
-    private static final Instant serverStart = Instant.now(); // registreres ved opstart
+    private static final Instant serverStart = Instant.now();
 
     public EndpointGroup getRoutes() {
         return () -> {
@@ -32,7 +32,7 @@ public class Routes {
                         "status", "running",
                         "service", "Movie Database API-backend",
                         "timestamp", timestamp,
-                        "timezone", now.getZone().toString(), // 👈 tilføjet
+                        "timezone", now.getZone().toString(),
                         "uptime", uptimeFormatted
                 ));
             });
