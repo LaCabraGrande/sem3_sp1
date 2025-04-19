@@ -2,26 +2,19 @@ package app.routes;
 
 import io.javalin.apibuilder.EndpointGroup;
 import app.controller.MovieController;
+import app.security.enums.Role; // 👈 Husk at importere dine roller
 import static io.javalin.apibuilder.ApiBuilder.*;
 
 public class MovieRoute {
 
     private final MovieController movieController = new MovieController();
 
-    // Her defineres alle endpoints for MovieController
+    // Her defineres alle endpoints for MovieController med roller
     protected EndpointGroup getMovieRoutes() {
         return () -> {
-            get("/all", movieController::getAllMovies);
-            get("/filtermovies", movieController::getFilteredMovies);
-            get("/filtercounts", movieController::getFilteredCounts);
-//            get("/rating/{rating}", movieController::getMoviesByRating);
-//            get("/genre/{genre}", movieController::getMoviesByGenre);
-//            get("/year/{year}", movieController::getMoviesFromYear);
-//            get("/imdb/{imdbId}", movieController::getMovieByImdbId);
-//            get("/instructor/{instructor}", movieController::getMoviesByInstructor);
-//            get("/actor/{actor}", movieController::getMoviesByActor);
-//            get("/title/{title}", movieController::getMoviesByTitle);
-//            get("/minvotes/{minVoteCount}", movieController::getMoviesWithMinimumVotes);
+            get("/all", movieController::getAllMovies, Role.ANYONE);
+            get("/filtermovies", movieController::getFilteredMovies, Role.ANYONE);
+            get("/filtercounts", movieController::getFilteredCounts, Role.ANYONE);
         };
     }
 }

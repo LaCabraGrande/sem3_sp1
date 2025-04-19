@@ -5,11 +5,14 @@ import jakarta.persistence.*;
 import app.entities.Genre;
 import java.util.stream.Collectors;
 import java.util.Set;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class GenreDAO {
 
     private static GenreDAO instance;
     private static EntityManagerFactory emf;
+    private static final Logger logger = LoggerFactory.getLogger(GenreDAO.class);
 
     public static GenreDAO getInstance(EntityManagerFactory _emf) {
         if (instance == null) {
@@ -19,28 +22,27 @@ public class GenreDAO {
         return instance;
     }
 
-
-
-
     public Genre findById(Long id) {
         try (EntityManager em = emf.createEntityManager()) {
             return em.find(Genre.class, id);
         } catch (Exception e) {
-            throw new JpaException("An error occurred while fetching genre by id", e);
+            logger.error("Fejl ved hentning af genre med id {}", id, e);
+            throw new JpaException("Fejl ved hentning af genre med id: " + id, e);
         }
     }
 
     public Genre update(Genre genre) {
-         try (EntityManager em = emf.createEntityManager()) {
+        try (EntityManager em = emf.createEntityManager()) {
             EntityTransaction transaction = em.getTransaction();
             try {
-                em.getTransaction().begin();
+                transaction.begin();
                 Genre updatedGenre = em.merge(genre);
-                em.getTransaction().commit();
+                transaction.commit();
                 return updatedGenre;
             } catch (Exception e) {
-                transaction.rollback();
-                throw new JpaException("An error occurred while updating genre", e);
+                if (transaction.isActive()) transaction.rollback();
+                logger.error("Fejl ved opdatering af genre: {}", genre, e);
+                throw new JpaException("Fejl ved opdatering af genre", e);
             }
         }
     }
@@ -49,12 +51,13 @@ public class GenreDAO {
         try (EntityManager em = emf.createEntityManager()) {
             EntityTransaction transaction = em.getTransaction();
             try {
-                em.getTransaction().begin();
+                transaction.begin();
                 em.persist(genre);
-                em.getTransaction().commit();
+                transaction.commit();
             } catch (Exception e) {
-                transaction.rollback();
-                throw new JpaException("An error occurred while creating genre", e);
+                if (transaction.isActive()) transaction.rollback();
+                logger.error("Fejl ved oprettelse af genre: {}", genre, e);
+                throw new JpaException("Fejl ved oprettelse af genre", e);
             }
         }
     }
@@ -63,16 +66,20 @@ public class GenreDAO {
         try (EntityManager em = emf.createEntityManager()) {
             return em.createQuery("SELECT g FROM Genre g WHERE g.genreId IN :ids", Genre.class)
                     .setParameter("ids", genreIds)
-                    .getResultStream() // Brug getResultStream for at få en stream af resultater
-                    .collect(Collectors.toSet()); // Saml resultaterne i et Set
+                    .getResultStream()
+                    .collect(Collectors.toSet());
         } catch (Exception e) {
-            throw new JpaException("An error occurred while fetching genres by ids", e);
+            logger.error("Fejl ved hentning af genrer med IDs: {}", genreIds, e);
+            throw new JpaException("Fejl ved hentning af genrer med de angivne IDs", e);
         }
     }
 
     public long countGenres() {
         try (EntityManager em = emf.createEntityManager()) {
             return em.createQuery("SELECT COUNT(g) FROM Genre g", Long.class).getSingleResult();
+        } catch (Exception e) {
+            logger.error("Fejl ved optælling af genrer", e);
+            throw new JpaException("Fejl ved optælling af genrer", e);
         }
     }
 }

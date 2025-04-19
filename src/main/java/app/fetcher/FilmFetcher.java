@@ -1,15 +1,14 @@
-// Opdateret FilmFetcher med fix: fjernet "Connection" header
 package app.fetcher;
 
-import app.dtos.ActorDTO;
-import app.dtos.DirectorDTO;
-import app.dtos.MovieDTO;
+import app.dtos.*;
 import app.entities.Genre;
 import app.daos.GenreDAO;
 import app.exceptions.JpaException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.Getter;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.net.URI;
@@ -20,14 +19,11 @@ import java.time.LocalDate;
 import java.time.LocalTime;
 import java.util.*;
 import java.util.concurrent.*;
-import java.util.logging.Logger;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
-import java.util.concurrent.atomic.AtomicInteger;
-
-
 public class FilmFetcher {
-    private static final Logger LOGGER = Logger.getLogger(FilmFetcher.class.getName());
+    private static final Logger logger = LoggerFactory.getLogger(FilmFetcher.class);
     private static final String API_KEY = System.getenv("API_KEY");
     private static final LocalDate today = LocalDate.now();
     private static final String BASE_API_URL = "https://api.themoviedb.org/3/discover/movie";
@@ -66,6 +62,7 @@ public class FilmFetcher {
             LocalDate fromDate = LocalDate.of(year, 1, 1);
             LocalDate toDate = LocalDate.of(year, 12, 31);
 
+            logger.info("\n🔽 Henter film udgivet fra {} til {} ...", fromDate, toDate);
             System.out.println("\n🔽 Henter film udgivet fra " + fromDate + " til " + toDate + " ...");
 
             String baseUrl = BASE_API_URL
@@ -104,13 +101,15 @@ public class FilmFetcher {
                 try {
                     allMovies.addAll(future.get());
                 } catch (ExecutionException e) {
-                    LOGGER.severe("Fejl ved udførelse af filmhentning: " + e.getMessage());
+                    logger.error("❌ Fejl ved udførelse af filmhentning", e);
                 }
             }
 
+            logger.info("✅ Færdig med at hente film fra {} ({} film i alt indtil nu)", year, allMovies.size());
             System.out.println("✅ Færdig med at hente film fra " + year + " (" + allMovies.size() + " film i alt indtil nu)");
         }
 
+        logger.info("⏳ Venter 20 sekunder før vi henter filmdetaljer...");
         System.out.println("⏳ Venter 20 sekunder før vi henter filmdetaljer...");
         Thread.sleep(20000);
 
@@ -121,9 +120,7 @@ public class FilmFetcher {
             detailFutures.add(executorService.submit(() -> {
                 int index = counter.incrementAndGet();
                 try {
-
                     Thread.sleep(100);
-
                     MovieDTO detailedMovie = fetchMovieWithDetails(movie.getImdbId());
                     movie.setActors(detailedMovie.getActors());
                     movie.setDirector(detailedMovie.getDirector());
@@ -131,15 +128,15 @@ public class FilmFetcher {
 
                     if (index % 1000 == 0) {
                         String time = LocalTime.now().withNano(0).toString();
+                        logger.info("🔍 [{}] Henter detaljer for film {} / {}", time, index, allMovies.size());
                         System.out.println("🔍 [" + time + "] Henter detaljer for film " + index + " / " + allMovies.size());
-                    }
-                    if (index % 1000 == 0) {
+                        logger.info("⏸️ Pause 5 sekunder efter {} detaljer...", index);
                         System.out.println("⏸️ Pause 5 sekunder efter " + index + " detaljer...");
                         Thread.sleep(5000);
                     }
-                    Thread.sleep(20); // buffer
+                    Thread.sleep(20);
                 } catch (IOException | InterruptedException e) {
-                    LOGGER.warning("Kunne ikke hente detaljer for film-ID: " + movie.getImdbId() + ": " + e.getMessage());
+                    logger.warn("Kunne ikke hente detaljer for film-ID: {}", movie.getImdbId(), e);
                 }
                 return null;
             }));
@@ -149,21 +146,21 @@ public class FilmFetcher {
             try {
                 future.get();
             } catch (ExecutionException e) {
-                LOGGER.severe("Fejl ved udførelse af filmhentning af detaljer: " + e.getMessage());
+                logger.error("Fejl ved udførelse af filmhentning af detaljer", e);
             }
         }
 
         executorService.shutdown();
+        logger.info("🎬 Hentede i alt {} film fra perioden {}–{}", allMovies.size(), startYear, currentYear);
         System.out.println("\n🎬 Hentede i alt " + allMovies.size() + " film fra perioden " + startYear + "–" + currentYear + "\n");
         return allMovies;
     }
-
 
     private String fetchApiResponseWithRetry(String apiUrl) throws IOException, InterruptedException {
         try {
             return fetchApiResponse(apiUrl);
         } catch (IOException e) {
-            LOGGER.warning("Første forsøg fejlede, forsøger igen: " + apiUrl);
+            logger.warn("Første forsøg fejlede, forsøger igen: {}", apiUrl);
             Thread.sleep(500);
             return fetchApiResponse(apiUrl);
         }
@@ -305,6 +302,7 @@ public class FilmFetcher {
                     genre.setName(name);
                     genreDAO.create(genre);
                 } else {
+                    logger.info("Genre med ID {} eksisterer allerede: {}", genreId, existingGenre.getName());
                     System.out.println("Genre med ID " + genreId + " eksisterer allerede: " + existingGenre.getName());
                 }
             } catch (Exception e) {

@@ -8,7 +8,11 @@ public class Routes {
 
     public EndpointGroup getRoutes() {
         return () -> {
-            path("api/movies", movieRoute.getMovieRoutes());
+            // Tilføj health route
+            get("health", ctx -> ctx.result("OK"));
+
+            // Flyt movies ind uden ekstra "api"
+            path("movies", movieRoute.getMovieRoutes());
         };
     }
 }

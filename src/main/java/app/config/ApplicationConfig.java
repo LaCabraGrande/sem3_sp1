@@ -1,64 +1,72 @@
 package app.config;
 
+import app.controller.ExceptionController;
+import app.exceptions.ApiException;
+import app.routes.Routes;
 import app.security.controllers.AccessController;
-import app.security.controllers.SecurityController;
-import app.security.exceptions.ApiException;
 import app.security.routes.SecurityRoutes;
-import app.utils.Utils;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import app.utils.ApiProps;
 import io.javalin.Javalin;
 import io.javalin.config.JavalinConfig;
 import io.javalin.http.Context;
-import io.javalin.rendering.template.JavalinThymeleaf; // Importer Thymeleaf
-import jakarta.persistence.EntityManagerFactory;
-import app.routes.Routes;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 public class ApplicationConfig {
 
-    private static Routes routes = new Routes();
-    private static ObjectMapper jsonMapper = new Utils().getObjectMapper();
-    private static SecurityController securityController = SecurityController.getInstance();
-    private static AccessController accessController = new AccessController();
-    private static Logger logger = LoggerFactory.getLogger(ApplicationConfig.class);
+    private static final Routes routes = new Routes();
+    private static final AccessController accessController = new AccessController();
+    private static final ExceptionController exceptionController = new ExceptionController();
+    private static final Logger logger = LoggerFactory.getLogger(ApplicationConfig.class);
 
+    // 🔧 Konfiguration af Javalin
     public static void configuration(JavalinConfig config) {
         config.showJavalinBanner = false;
+        config.router.contextPath = ApiProps.API_CONTEXT;
+        config.bundledPlugins.enableDevLogging();
         config.bundledPlugins.enableRouteOverview("/routes");
-        config.router.contextPath = "/"; // base path for all endpoints
+
         config.router.apiBuilder(routes.getRoutes());
         config.router.apiBuilder(SecurityRoutes.getSecuredRoutes());
         config.router.apiBuilder(SecurityRoutes.getSecurityRoutes());
+
         config.http.defaultContentType = "application/json";
-        config.staticFiles.add("/public"); // default content type for requests
-        config.fileRenderer(new JavalinThymeleaf(ThymeleafConfig.templateEngine()));
     }
 
-    public static Javalin startServer(int port) {
+    public static void startServer() {
         Javalin app = Javalin.create(ApplicationConfig::configuration);
 
-        app.beforeMatched(accessController::accessHandler);
-        app.beforeMatched(ctx -> accessController.accessHandler(ctx));
+        // 🌍 CORS
+        app.before(ApplicationConfig::corsHeaders);
+        app.options("/*", ApplicationConfig::corsHeadersOptions);
 
-        app.exception(Exception.class, ApplicationConfig::generalExceptionHandler);
-        app.exception(ApiException.class, ApplicationConfig::apiExceptionHandler);
-        app.start(port);
-        return app;
+        // 🔐 Access kontrol før matched routes
+        app.beforeMatched(accessController::accessHandler);
+
+        // ❗ Exception handling
+        app.exception(Exception.class, exceptionController::exceptionHandler);
+        app.exception(ApiException.class, exceptionController::apiExceptionHandler);
+
+        // 🚀 Start server
+        app.start(ApiProps.PORT);
+        logger.info("Server started on port {}", ApiProps.PORT);
     }
 
     public static void stopServer(Javalin app) {
         app.stop();
+        logger.info("Server stopped.");
     }
 
-    private static void generalExceptionHandler(Exception e, Context ctx) {
-        logger.error("An unhandled exception occurred", e.getMessage());
-        ctx.json(Utils.convertToJsonMessage(ctx, "error", e.getMessage()));
+    // CORS headers
+    private static void corsHeaders(Context ctx) {
+        ctx.header("Access-Control-Allow-Origin", "*");
+        ctx.header("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS");
+        ctx.header("Access-Control-Allow-Headers", "Content-Type, Authorization");
+        ctx.header("Access-Control-Allow-Credentials", "true");
     }
 
-    public static void apiExceptionHandler(ApiException e, Context ctx) {
-        ctx.status(e.getCode());
-        logger.warn("An API exception occurred: Code: {}, Message: {}", e.getCode(), e.getMessage());
-        ctx.json(Utils.convertToJsonMessage(ctx, "warning", e.getMessage()));
+    private static void corsHeadersOptions(Context ctx) {
+        corsHeaders(ctx);
+        ctx.status(204);
     }
 }

@@ -7,12 +7,16 @@ import app.exceptions.JpaException;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.EntityManagerFactory;
 import jakarta.persistence.EntityTransaction;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
 public class DirectorDAO {
 
+    private static final Logger logger = LoggerFactory.getLogger(DirectorDAO.class);
     private static DirectorDAO instance;
     private static EntityManagerFactory emf;
 
@@ -26,19 +30,15 @@ public class DirectorDAO {
 
     public void create(DirectorDTO dto) {
         try (EntityManager em = emf.createEntityManager()) {
-            try {
-                em.getTransaction().begin();
-                Director director = new Director();
-                director.setId(dto.getId());
-                director.setName(dto.getName());
-                em.persist(director);
-                em.getTransaction().commit();
-            } catch (Exception e) {
-                if (em.getTransaction().isActive()) {
-                    em.getTransaction().rollback();
-                }
-                throw new JpaException("Der opstod en fejl under oprettelse af en instruktør", e);
-            }
+            em.getTransaction().begin();
+            Director director = new Director();
+            director.setId(dto.getId());
+            director.setName(dto.getName());
+            em.persist(director);
+            em.getTransaction().commit();
+        } catch (Exception e) {
+            logger.error("Fejl under oprettelse af en instruktør", e);
+            throw new JpaException("Der opstod en fejl under oprettelse af en instruktør", e);
         }
     }
 
@@ -47,29 +47,21 @@ public class DirectorDAO {
             throw new IllegalArgumentException("Id kan ikke være null");
         }
 
-        EntityManager em = null;
-        try {
-            em = emf.createEntityManager();
-            Director director = em.find(Director.class, id);
-            System.out.println("Fandt instruktør med " + id + ": " + director);
-            return director;
+        try (EntityManager em = emf.createEntityManager()) {
+            return em.find(Director.class, id);
         } catch (Exception e) {
-            e.printStackTrace();
+            logger.error("Fejl under søgning efter en instruktør med ID: {}", id, e);
             throw new JpaException("Der opstod en fejl under søgning efter en instruktør", e);
-        } finally {
-            if (em != null && em.isOpen()) {
-                em.close();
-            }
         }
     }
 
     public Director findDirectorByName(String name) {
-
         try (EntityManager em = emf.createEntityManager()) {
             return em.createQuery("SELECT d FROM Director d WHERE d.name = :name", Director.class)
                     .setParameter("name", name)
                     .getSingleResult();
         } catch (Exception e) {
+            logger.error("Fejl under søgning efter en instruktør med navn: {}", name, e);
             throw new JpaException("Der opstod en fejl under søgning efter en instruktør", e);
         }
     }
@@ -78,6 +70,7 @@ public class DirectorDAO {
         try (EntityManager em = emf.createEntityManager()) {
             return em.find(Director.class, id);
         } catch (Exception e) {
+            logger.error("Fejl under søgning efter en instruktør med ID: {}", id, e);
             throw new JpaException("Der opstod en fejl under søgning efter en instruktør", e);
         }
     }
@@ -88,20 +81,16 @@ public class DirectorDAO {
 
     public void update(DirectorDTO dto) {
         try (EntityManager em = emf.createEntityManager()) {
-            try {
-                em.getTransaction().begin();
-                Director director = em.find(Director.class, dto.getId());
-                if (director != null) {
-                    director.setName(dto.getName());
-                    em.merge(director);
-                }
-                em.getTransaction().commit();
-            } catch (Exception e) {
-                if (em.getTransaction().isActive()) {
-                    em.getTransaction().rollback();
-                }
-                throw new JpaException("Der opstod en fejl under opdatering af en instruktør", e);
+            em.getTransaction().begin();
+            Director director = em.find(Director.class, dto.getId());
+            if (director != null) {
+                director.setName(dto.getName());
+                em.merge(director);
             }
+            em.getTransaction().commit();
+        } catch (Exception e) {
+            logger.error("Fejl under opdatering af en instruktør", e);
+            throw new JpaException("Der opstod en fejl under opdatering af en instruktør", e);
         }
     }
 
@@ -110,13 +99,10 @@ public class DirectorDAO {
             throw new IllegalArgumentException("En instruktør kan ikke være null");
         }
 
-        Director foundDirector = null;
-
         try (EntityManager em = emf.createEntityManager()) {
-           foundDirector = em.find(Director.class, director.getId());
-
+            Director foundDirector = em.find(Director.class, director.getId());
             if (foundDirector != null) {
-               return foundDirector;
+                return foundDirector;
             }
 
             em.getTransaction().begin();
@@ -124,7 +110,7 @@ public class DirectorDAO {
             em.getTransaction().commit();
             return director;
         } catch (Exception e) {
-            e.printStackTrace();
+            logger.error("Fejl under oprettelse af en instruktør", e);
             throw new JpaException("Der opstod en fejl under oprettelse af en instruktør", e);
         }
     }
@@ -136,20 +122,17 @@ public class DirectorDAO {
 
         try (EntityManager em = emf.createEntityManager()) {
             em.getTransaction().begin();
-            // Her bruger jeg merge i stedet for persist for at undgå problemer med vedhæftede entiteter
             em.merge(director);
             em.getTransaction().commit();
-            System.out.println("Instruktør gemt eller opdateret: " + director);
         } catch (Exception e) {
-            e.printStackTrace();
+            logger.error("Fejl under merge/persist af en instruktør", e);
             throw new JpaException("Der opstod en fejl under merge eller persist af en instruktør", e);
         }
     }
 
     public void delete(Long id) {
-        EntityManager em = emf.createEntityManager();
-        EntityTransaction transaction = em.getTransaction();
-        try {
+        try (EntityManager em = emf.createEntityManager()) {
+            EntityTransaction transaction = em.getTransaction();
             transaction.begin();
             Director director = em.find(Director.class, id);
             if (director != null) {
@@ -157,37 +140,24 @@ public class DirectorDAO {
             }
             transaction.commit();
         } catch (Exception e) {
-            if (transaction.isActive()) {
-                transaction.rollback();
-            }
-            throw new JpaException("An error occurred while deleting director", e);
-        } finally {
-            em.close();
+            logger.error("Fejl under sletning af instruktør med ID: {}", id, e);
+            throw new JpaException("Der opstod en fejl under sletning af en instruktør", e);
         }
     }
 
     public List<DirectorDTO> getAll() {
-        EntityManager em = emf.createEntityManager();
-        try {
-            // Hent alle Director entiteter
+        try (EntityManager em = emf.createEntityManager()) {
             List<Director> directors = em.createQuery("SELECT d FROM Director d", Director.class).getResultList();
 
             return directors.stream()
                     .map(d -> {
-                        // Hent filmene som instruktøren har instrueret
                         List<Movie> movies = em.createQuery("SELECT m FROM Movie m WHERE m.director.id = :directorId", Movie.class)
                                 .setParameter("directorId", d.getId())
                                 .getResultList();
 
-                        // Hent film-ID'er og film-titler
-                        Set<Long> movieIds = movies.stream()
-                                .map(Movie::getId)
-                                .collect(Collectors.toSet());
-                        Set<String> movieTitles = movies.stream()
-                                .map(Movie::getTitle)
-                                .collect(Collectors.toSet());
+                        Set<Long> movieIds = movies.stream().map(Movie::getId).collect(Collectors.toSet());
+                        Set<String> movieTitles = movies.stream().map(Movie::getTitle).collect(Collectors.toSet());
 
-                        // Byg DirectorDTO med film-ID'er og film-titler
                         return DirectorDTO.builder()
                                 .id(d.getId())
                                 .name(d.getName())
@@ -196,9 +166,6 @@ public class DirectorDAO {
                                 .build();
                     })
                     .toList();
-        } finally {
-            em.close();
         }
     }
-
 }

@@ -1,18 +1,16 @@
 package app.config;
 
-import app.entities.Actor;
-import app.entities.Director;
-import app.entities.Movie;
-import app.entities.Genre;
+import app.entities.*;
 import app.security.entities.Role;
 import app.security.entities.User;
-import app.utils.Utils;
+import app.utils.ApiProps;
 import jakarta.persistence.EntityManagerFactory;
 import org.hibernate.SessionFactory;
 import org.hibernate.boot.registry.StandardServiceRegistryBuilder;
 import org.hibernate.cfg.Configuration;
 import org.hibernate.service.ServiceRegistry;
 import java.util.Properties;
+
 
 public class HibernateConfig {
 
@@ -84,36 +82,28 @@ public class HibernateConfig {
     private static Properties setBaseProperties(Properties props){
         props.put("hibernate.dialect", "org.hibernate.dialect.PostgreSQLDialect");
         props.put("hibernate.connection.driver_class", "org.postgresql.Driver");
-        props.put("hibernate.hbm2ddl.auto", "create");
+        props.put("hibernate.hbm2ddl.auto", "update");
         props.put("hibernate.current_session_context_class", "thread");
         props.put("hibernate.show_sql", "false");
         props.put("hibernate.format_sql", "false");
         props.put("hibernate.use_sql_comments", "false");
-
         return props;
     }
 
-
     private static Properties setDeployedProperties(Properties props) {
         String DBName = System.getenv("DB_NAME");
-
-        // 🔍 Debug-udskrift til at tjekke om miljøvariablerne virker
-        System.out.println("Connection string: " + System.getenv("CONNECTION_STR") + DBName);
-        System.out.println("Bruger: " + System.getenv("DB_USERNAME"));
-
         props.setProperty("hibernate.connection.url", System.getenv("CONNECTION_STR") + DBName);
         props.setProperty("hibernate.connection.username", System.getenv("DB_USERNAME"));
         props.setProperty("hibernate.connection.password", System.getenv("DB_PASSWORD"));
         return props;
     }
 
-
     private static Properties setDevProperties(Properties props) {
-        String DBName = Utils.getPropertyValue("DB_NAME", "config.properties");
-        System.out.println("DB_NAME: " + DBName);
-        props.put("hibernate.connection.url", "jdbc:postgresql://localhost:5432/" + DBName);
-        props.put("hibernate.connection.username", "postgres");
-        props.put("hibernate.connection.password", "postgres");
+        props.put("hibernate.connection.url", ApiProps.DB_URL);
+        props.put("hibernate.connection.username", ApiProps.DB_USERNAME);
+        props.put("hibernate.connection.password", ApiProps.DB_PASSWORD);
+        props.put("hibernate.show_sql", "false");
+        props.put("hibernate.format_sql", "false");
         return props;
     }
 
@@ -121,10 +111,11 @@ public class HibernateConfig {
         // props.put("hibernate.dialect", "org.hibernate.dialect.PostgreSQLDialect");
         props.put("hibernate.connection.driver_class", "org.testcontainers.jdbc.ContainerDatabaseDriver");
         props.put("hibernate.connection.url", "jdbc:tc:postgresql:15.3-alpine3.18:///test_db");
-        props.put("hibernate.connection.username", "postgres");
-        props.put("hibernate.connection.password", "postgres");
+        props.put("hibernate.connection.username", ApiProps.DB_USERNAME);
+        props.put("hibernate.connection.password", ApiProps.DB_PASSWORD);
         props.put("hibernate.archive.autodetection", "class");
-        props.put("hibernate.show_sql", "true");
+        props.put("hibernate.show_sql", "false");
+        props.put("hibernate.format_sql", "false");
         props.put("hibernate.hbm2ddl.auto", "create-drop"); // update for production
         return props;
     }
