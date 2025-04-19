@@ -4,6 +4,7 @@ import app.controller.ExceptionController;
 import app.exceptions.ApiException;
 import app.routes.Routes;
 import app.security.controllers.AccessController;
+import app.security.enums.Role;
 import app.security.routes.SecurityRoutes;
 import app.utils.ApiProps;
 import io.javalin.Javalin;
@@ -24,7 +25,7 @@ public class ApplicationConfig {
         config.showJavalinBanner = false;
         config.router.contextPath = ApiProps.API_CONTEXT;
         config.bundledPlugins.enableDevLogging();
-        config.bundledPlugins.enableRouteOverview("/routes");
+        config.bundledPlugins.enableRouteOverview("/routes", Role.ANYONE);
 
         config.router.apiBuilder(routes.getRoutes());
         config.router.apiBuilder(SecurityRoutes.getSecuredRoutes());
