@@ -3,6 +3,7 @@ package app.routes;
 import io.javalin.apibuilder.EndpointGroup;
 import static io.javalin.apibuilder.ApiBuilder.*;
 import java.time.format.DateTimeFormatter;
+import java.util.LinkedHashMap;
 import java.util.Locale;
 import java.util.Map;
 import java.time.Duration;
@@ -28,13 +29,14 @@ public class Routes {
 
                 String uptimeFormatted = String.format("%d:%02d:%02d", hours, minutes, seconds);
 
-                ctx.json(Map.of(
-                        "status", "running",
-                        "service", "Movie Database API-backend",
-                        "timestamp", timestamp,
-                        "timezone", now.getZone().toString(),
-                        "uptime", uptimeFormatted
-                ));
+                Map<String, Object> response = new LinkedHashMap<>();
+                response.put("service", "Movie Database API-backend");
+                response.put("status", "running");
+                response.put("timestamp", timestamp);
+                response.put("timezone", now.getZone().toString());
+                response.put("uptime", uptimeFormatted);
+
+                ctx.json(response);
             });
 
             path("movies", movieRoute.getMovieRoutes());
